@@ -42,6 +42,7 @@
         <span class="status-dot"></span>
         <span id="walletText">Connect Wallet</span>
       </button>
+      <button class="account-button" id="accountButton" type="button">Login</button>
     </header>
 
     <main>
@@ -682,6 +683,36 @@
     </footer>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <section class="auth-modal" id="authModal" hidden aria-label="Account login">
+      <div class="auth-card">
+        <button class="auth-close" id="authClose" type="button" aria-label="Close login">x</button>
+        <div>
+          <p class="eyebrow">Photora account</p>
+          <h2>Login / daftar akaun</h2>
+          <p>Pengguna boleh beli foto, creator boleh submit foto, admin boleh urus CMS.</p>
+        </div>
+        <div class="auth-tabs" role="tablist">
+          <button class="active" type="button" data-auth-mode="login">Login</button>
+          <button type="button" data-auth-mode="register">Register</button>
+        </div>
+        <form class="auth-form" id="authForm">
+          <label class="register-only">
+            Nama
+            <input name="name" type="text" placeholder="Nama penuh" />
+          </label>
+          <label>
+            Email
+            <input name="email" type="email" placeholder="you@email.com" required />
+          </label>
+          <label>
+            Password
+            <input name="password" type="password" placeholder="Password" required />
+          </label>
+          <button class="primary-action full" type="submit" id="authSubmit">Login</button>
+          <p class="form-note" id="authNote" role="status"></p>
+        </form>
+      </div>
+    </section>
     <aside class="chat-widget" id="chatWidget" aria-label="Virtual support chat">
       <button class="chat-toggle" id="chatToggle" type="button" aria-expanded="false" aria-controls="chatPanel">
         Chat

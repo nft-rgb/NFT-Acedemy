@@ -1,4 +1,4 @@
-const nftItems = [
+let nftItems = [
   {
     title: "Konvo Seri Gemilang #018",
     creator: "Lensa Ilmu Studio",
@@ -108,6 +108,7 @@ const listedMetric = document.querySelector("#listedMetric");
 const revenueMetric = document.querySelector("#revenueMetric");
 const walletButton = document.querySelector("#walletButton");
 const walletText = document.querySelector("#walletText");
+const accountButton = document.querySelector("#accountButton");
 const menuToggle = document.querySelector("#menuToggle");
 const topbar = document.querySelector(".topbar");
 const primaryNav = document.querySelector("#primaryNav");
@@ -144,9 +145,18 @@ const chatMessages = document.querySelector("#chatMessages");
 const quickReplies = document.querySelectorAll(".quick-replies button");
 const categoryPills = document.querySelectorAll(".category-pills button");
 const itemCountLabel = document.querySelector("#itemCountLabel");
+const authModal = document.querySelector("#authModal");
+const authClose = document.querySelector("#authClose");
+const authForm = document.querySelector("#authForm");
+const authNote = document.querySelector("#authNote");
+const authSubmit = document.querySelector("#authSubmit");
+const authTabs = document.querySelectorAll("[data-auth-mode]");
+const registerOnlyFields = document.querySelectorAll(".register-only");
 
 let walletConnected = false;
 let selectedCheckoutItem = null;
+let currentUser = null;
+let authMode = "login";
 const ethToMyr = 15000;
 const transactions = [
   { item: "Konvo Seri Gemilang #018", buyer: "0x92B4...A81D", payment: "Wallet", gross: 0.42, type: "primary" },
@@ -175,6 +185,68 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.add("show");
   window.setTimeout(() => toast.classList.remove("show"), 2400);
+}
+
+async function apiRequest(path, options = {}) {
+  const response = await fetch(path, {
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    ...options,
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "Request failed.");
+  return result;
+}
+
+function normalisePhoto(photo) {
+  return {
+    id: photo.id,
+    title: photo.title,
+    creator: photo.creator || photo.creator_name,
+    category: photo.category,
+    price: Number(photo.price || photo.price_eth || 0),
+    image: photo.image || photo.image_url,
+    description: photo.description || "",
+    status: photo.status || "approved",
+  };
+}
+
+function updateAccountUi() {
+  accountButton.textContent = currentUser ? `${currentUser.role}: ${currentUser.name}` : "Login";
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  authTabs.forEach((button) => button.classList.toggle("active", button.dataset.authMode === mode));
+  registerOnlyFields.forEach((field) => {
+    field.style.display = mode === "register" ? "grid" : "none";
+  });
+  authSubmit.textContent = mode === "register" ? "Register" : "Login";
+  authNote.textContent = "";
+}
+
+async function loadSession() {
+  try {
+    const result = await apiRequest("/api/me");
+    currentUser = result.user;
+    updateAccountUi();
+  } catch {
+    currentUser = null;
+    updateAccountUi();
+  }
+}
+
+async function loadPhotos() {
+  try {
+    const result = await apiRequest("/api/photos");
+    if (Array.isArray(result.photos) && result.photos.length > 0) {
+      nftItems = result.photos.map(normalisePhoto);
+      updateMetrics();
+      renderCards();
+    }
+  } catch {
+    showToast("Guna data demo kerana database belum tersedia.");
+  }
 }
 
 function closeMobileMenu() {
@@ -360,6 +432,55 @@ walletButton.addEventListener("click", () => {
   showToast(walletConnected ? "Wallet disambungkan." : "Wallet diputuskan.");
 });
 
+accountButton.addEventListener("click", async () => {
+  if (currentUser) {
+    try {
+      await apiRequest("/api/auth/logout", { method: "POST", body: "{}" });
+      currentUser = null;
+      updateAccountUi();
+      showToast("Akaun sudah logout.");
+    } catch (error) {
+      showToast(error.message);
+    }
+    return;
+  }
+
+  authModal.hidden = false;
+  setAuthMode("login");
+});
+
+authClose.addEventListener("click", () => {
+  authModal.hidden = true;
+});
+
+authTabs.forEach((button) => {
+  button.addEventListener("click", () => setAuthMode(button.dataset.authMode));
+});
+
+authForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const data = new FormData(authForm);
+  const endpoint = authMode === "register" ? "/api/auth/register" : "/api/auth/login";
+  try {
+    const result = await apiRequest(endpoint, {
+      method: "POST",
+      body: JSON.stringify({
+        name: data.get("name"),
+        email: data.get("email"),
+        password: data.get("password"),
+      }),
+    });
+    currentUser = result.user;
+    updateAccountUi();
+    authForm.reset();
+    authModal.hidden = true;
+    showToast(`Login sebagai ${currentUser.role}.`);
+    await loadPhotos();
+  } catch (error) {
+    authNote.textContent = error.message;
+  }
+});
+
 menuToggle.addEventListener("click", () => {
   const isOpen = topbar.classList.toggle("nav-open");
   menuToggle.setAttribute("aria-expanded", String(isOpen));
@@ -391,8 +512,13 @@ categoryPills.forEach((button) => {
   });
 });
 
-mintForm.addEventListener("submit", (event) => {
+mintForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (!currentUser) {
+    authModal.hidden = false;
+    formNote.textContent = "Login dahulu sebelum submit foto.";
+    return;
+  }
   const data = new FormData(mintForm);
   const item = {
     title: data.get("title").trim(),
@@ -402,14 +528,33 @@ mintForm.addEventListener("submit", (event) => {
     image: data.get("image").trim(),
   };
 
-  nftItems.unshift(item);
-  mintForm.reset();
-  formNote.textContent = `${item.title} berjaya dimint dan disenaraikan.`;
-  categoryFilter.value = "all";
-  searchInput.value = "";
-  updateMetrics();
-  renderCards();
-  showToast("NFT baru sudah live dalam marketplace.");
+  try {
+    const result = await apiRequest("/api/photos", {
+      method: "POST",
+      body: JSON.stringify({
+        title: item.title,
+        category: item.category,
+        price_eth: item.price,
+        image_url: item.image,
+        description: data.get("description") || "",
+        source_type: item.category === "Mobilegraphy" ? "mobilegraphy" : "dslr",
+      }),
+    });
+    const created = normalisePhoto(result.photo);
+    if (created.status === "approved") nftItems.unshift(created);
+    mintForm.reset();
+    formNote.textContent =
+      created.status === "pending"
+        ? `${created.title} dihantar untuk approval admin.`
+        : `${created.title} berjaya disenaraikan.`;
+    categoryFilter.value = "all";
+    searchInput.value = "";
+    updateMetrics();
+    renderCards();
+    showToast("Foto sudah dihantar ke sistem CMS.");
+  } catch (error) {
+    formNote.textContent = error.message;
+  }
 });
 
 feeSettingsForm.addEventListener("submit", (event) => {
@@ -442,8 +587,10 @@ payFiatButton.addEventListener("click", async () => {
       body: JSON.stringify({
         title: selectedCheckoutItem.title,
         amountCents: Math.round(amountMyr * 100),
+        amountEth: selectedCheckoutItem.price,
+        photoId: selectedCheckoutItem.id,
         customerName: "Photora Buyer",
-        customerEmail: "buyer@example.com",
+        customerEmail: currentUser?.email || "buyer@example.com",
         customerPhone: "0100000000",
         paymentMethod: method,
       }),
@@ -525,3 +672,5 @@ tabButtons.forEach((button) => {
 updateMetrics();
 renderCards();
 showPage((window.location.hash || "#market").replace("#", ""), false);
+setAuthMode("login");
+loadSession().then(loadPhotos);
