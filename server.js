@@ -186,7 +186,15 @@ async function optionalMysql() {
 }
 
 function loadLocalData() {
-  if (fs.existsSync(localDataPath)) return JSON.parse(fs.readFileSync(localDataPath, "utf8"));
+  if (fs.existsSync(localDataPath)) {
+    const data = JSON.parse(fs.readFileSync(localDataPath, "utf8"));
+    const superAdmin = data.users.find((user) => user.role === "super_admin");
+    if (superAdmin && superAdmin.email !== config.superAdminEmail) {
+      superAdmin.email = config.superAdminEmail;
+      saveLocalData(data);
+    }
+    return data;
+  }
   const data = {
     counters: { users: 1, photos: seedPhotos.length, orders: 0 },
     users: [
@@ -316,12 +324,14 @@ function createMysqlStore(pool) {
           if (error.code !== "ER_DUP_KEYNAME") throw error;
         }
       }
-      const [rows] = await pool.execute("SELECT id FROM users WHERE email = ? LIMIT 1", [config.superAdminEmail]);
+      const [rows] = await pool.execute("SELECT id FROM users WHERE role = 'super_admin' ORDER BY id ASC LIMIT 1");
       if (rows.length === 0) {
         await pool.execute(
           "INSERT INTO users (name, email, password_hash, role, status) VALUES (?, ?, ?, 'super_admin', 'active')",
           ["Super Admin", config.superAdminEmail, hashPassword(config.superAdminPassword)],
         );
+      } else {
+        await pool.execute("UPDATE users SET email = ? WHERE id = ? AND email <> ?", [config.superAdminEmail, rows[0].id, config.superAdminEmail]);
       }
       const [photoRows] = await pool.execute("SELECT id FROM photos LIMIT 1");
       if (photoRows.length === 0) {
