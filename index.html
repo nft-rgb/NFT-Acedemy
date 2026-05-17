@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="ms">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Photora NFT Marketplace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=3.2.0" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Photora home">
+        <span class="brand-mark">P</span>
+        <span>Photora</span>
+      </a>
+      <button
+        class="menu-toggle"
+        id="menuToggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="primaryNav"
+      >
+        Menu
+      </button>
+      <nav class="nav-links" id="primaryNav" aria-label="Navigasi utama">
+        <a class="active" href="#market" data-page="market"><span>Discover</span></a>
+        <a href="#checkout" data-page="checkout"><span>Pay</span></a>
+        <a href="#mint" data-page="mint"><span>Mint</span></a>
+        <a href="#cms" data-page="cms"><span>CMS</span></a>
+        <a href="#dashboard" data-page="dashboard"><span>Dash</span></a>
+        <a class="secondary-nav" href="#protection" data-page="protection"><span>Protect</span></a>
+        <a class="secondary-nav" href="#security" data-page="security"><span>Security</span></a>
+        <a class="secondary-nav" href="#growth" data-page="growth"><span>Growth</span></a>
+        <a class="secondary-nav" href="#profit" data-page="profit"><span>Profit</span></a>
+      </nav>
+      <button class="wallet-button" id="walletButton" type="button">
+        <span class="status-dot"></span>
+        <span id="walletText">Connect Wallet</span>
+      </button>
+    </header>
+
+    <main>
+      <section class="hero page-section active" data-page="market">
+        <div class="hero-copy">
+          <p class="eyebrow">Malaysia photo NFT marketplace</p>
+          <h1>Marketplace NFT untuk semua jenis foto asli.</h1>
+          <p class="hero-text">
+            Platform untuk jurugambar DSLR dan mobilegraphy yang mahu jual foto sebenar
+            sebagai NFT. Foto janaan AI dan image manipulation tidak diterima.
+          </p>
+          <div class="hero-actions">
+            <a class="primary-action" href="#mint" data-page="mint">Mint foto</a>
+            <a class="secondary-action" href="#market" data-page="market">Discover</a>
+          </div>
+        </div>
+        <div class="hero-showcase" aria-label="Koleksi NFT pilihan">
+          <article class="featured-nft">
+            <img
+              src="https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1100&q=80"
+              alt="Graduan di majlis konvokesyen"
+            />
+            <div class="featured-info">
+              <div>
+                <span class="muted">Featured drop</span>
+                <strong>Konvo Seri Gemilang #018</strong>
+              </div>
+              <span class="price-pill">0.42 ETH</span>
+            </div>
+          </article>
+          <div class="stats-strip" aria-label="Statistik marketplace">
+            <span><strong>12.8k</strong> Foto minted</span>
+            <span><strong>2.1k</strong> Kreator</span>
+            <span><strong>7.4 ETH</strong> Volume</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section page-section active" id="market" data-page="market">
+        <div class="discover-header">
+          <div>
+            <p class="eyebrow">Discover</p>
+            <h2>Explore real photo NFTs</h2>
+          </div>
+          <div class="discover-tabs" aria-label="Asset type">
+            <button class="active" type="button">NFTs</button>
+            <button type="button">Collections</button>
+            <button type="button">Drops</button>
+          </div>
+        </div>
+
+        <div class="discover-search">
+          <label class="search-box">
+            <span>Search</span>
+            <input id="searchInput" type="search" placeholder="Search photo, collection, creator..." />
+          </label>
+          <label class="select-box">
+            <span>Kategori</span>
+            <select id="categoryFilter">
+              <option value="all">Semua</option>
+              <option value="Konvokesyen">Konvokesyen</option>
+              <option value="Majlis">Majlis</option>
+              <option value="Potret">Potret</option>
+              <option value="Travel">Travel</option>
+              <option value="Landscape">Landscape</option>
+              <option value="Street">Street</option>
+              <option value="Food">Food</option>
+              <option value="Product">Product</option>
+              <option value="Sports">Sports</option>
+              <option value="Wildlife">Wildlife</option>
+              <option value="Architecture">Architecture</option>
+              <option value="Documentary">Documentary</option>
+              <option value="Mobilegraphy">Mobilegraphy</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="category-pills" aria-label="Quick categories">
+          <button class="active" type="button" data-category="all">All</button>
+          <button type="button" data-category="Konvokesyen">Konvokesyen</button>
+          <button type="button" data-category="Mobilegraphy">Mobilegraphy</button>
+          <button type="button" data-category="Street">Street</button>
+          <button type="button" data-category="Landscape">Landscape</button>
+          <button type="button" data-category="Food">Food</button>
+          <button type="button" data-category="Sports">Sports</button>
+          <button type="button" data-category="Product">Product</button>
+        </div>
+
+        <div class="authenticity-banner">
+          <div>
+            <span class="metric-label">Submission policy</span>
+            <strong>Real photo only</strong>
+          </div>
+          <p>
+            Platform ini menerima semua jenis foto daripada kamera DSLR dan mobile phone.
+            Foto janaan AI, komposit palsu, atau image manipulation berat tidak diterima.
+          </p>
+          <div class="policy-tags">
+            <span>DSLR accepted</span>
+            <span>Mobilegraphy accepted</span>
+            <span>No AI-generated image</span>
+            <span>No heavy manipulation</span>
+          </div>
+        </div>
+
+        <div class="market-showcase">
+          <section class="featured-collections" aria-label="Featured collections">
+            <div class="mini-section-heading">
+              <h3>Featured Collections</h3>
+              <a href="#market" data-page="market">View all</a>
+            </div>
+            <div class="collection-row">
+              <article class="collection-card">
+                <img
+                  src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=900&q=80"
+                  alt="Convocation collection"
+                />
+                <div>
+                  <strong>Campus Convocation</strong>
+                  <span>Floor 0.29 ETH · 186 items</span>
+                </div>
+              </article>
+              <article class="collection-card">
+                <img
+                  src="https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=900&q=80"
+                  alt="Street photography collection"
+                />
+                <div>
+                  <strong>Urban Street Archive</strong>
+                  <span>Floor 0.35 ETH · 74 items</span>
+                </div>
+              </article>
+              <article class="collection-card">
+                <img
+                  src="https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=80"
+                  alt="Mobilegraphy collection"
+                />
+                <div>
+                  <strong>Mobilegraphy Selects</strong>
+                  <span>Floor 0.14 ETH · 212 items</span>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <aside class="trending-board" aria-label="Trending collections">
+            <div class="mini-section-heading">
+              <h3>Trending</h3>
+              <span>24h</span>
+            </div>
+            <ol>
+              <li><span>Konvo Seri</span><strong>+18.2%</strong></li>
+              <li><span>Street Archive</span><strong>+12.4%</strong></li>
+              <li><span>Foodgraph</span><strong>+8.7%</strong></li>
+              <li><span>Rimba Frame</span><strong>+6.1%</strong></li>
+            </ol>
+          </aside>
+        </div>
+
+        <div class="mini-section-heading item-heading">
+          <h3>Featured photo NFTs</h3>
+          <span id="itemCountLabel">0 items</span>
+        </div>
+        <div class="nft-grid" id="nftGrid" aria-live="polite"></div>
+      </section>
+
+      <section class="section checkout-section page-section" id="checkout" data-page="checkout">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Fiat checkout</p>
+            <h2>Beli tanpa crypto</h2>
+          </div>
+        </div>
+        <div class="checkout-layout">
+          <div class="checkout-copy">
+            <p>
+              Pengguna yang belum ada crypto boleh bayar dengan wang biasa melalui payment gateway.
+              Selepas bayaran berjaya, platform boleh mint NFT ke custodial wallet pengguna atau
+              simpan pembelian sebagai lesen digital sehingga pengguna sambung wallet sendiri.
+            </p>
+            <div class="payment-methods" aria-label="Kaedah bayaran fiat">
+              <span>ToyyibPay Sandbox</span>
+              <span>FPX</span>
+              <span>Debit / Credit Card</span>
+              <span>E-wallet</span>
+              <span>Bank Transfer</span>
+            </div>
+          </div>
+          <aside class="checkout-card" aria-label="Checkout preview">
+            <span class="metric-label">Selected photo</span>
+            <strong id="checkoutTitle">Pilih foto di marketplace</strong>
+            <div class="checkout-row">
+              <span>Crypto price</span>
+              <b id="checkoutEth">0.00 ETH</b>
+            </div>
+            <div class="checkout-row">
+              <span>Estimated MYR</span>
+              <b id="checkoutMyr">RM 0.00</b>
+            </div>
+            <label>
+              Payment method
+              <select id="paymentMethod">
+                <option value="FPX">FPX Online Banking</option>
+                <option value="Card">Debit / Credit Card</option>
+                <option value="E-wallet">E-wallet</option>
+              </select>
+            </label>
+            <button class="primary-action full" id="payFiatButton" type="button">Pay with MYR</button>
+            <p class="form-note" id="checkoutNote" role="status"></p>
+          </aside>
+        </div>
+      </section>
+
+      <section class="mint-panel page-section" id="mint" data-page="mint">
+        <div class="mint-copy">
+          <p class="eyebrow">Creator studio</p>
+          <h2>Mint foto sebagai NFT</h2>
+          <p>
+            Muat naik foto asli, tetapkan kategori dan harga, kemudian senaraikan dalam market.
+            Foto perlu datang daripada kamera DSLR atau mobile phone.
+          </p>
+          <ul class="trust-list">
+            <li>Hanya foto sebenar diterima: DSLR, mirrorless, compact camera, atau mobilegraphy.</li>
+            <li>Foto janaan AI dan manipulasi imej berat tidak diterima.</li>
+            <li>Royalti kreator boleh ditetapkan semasa smart contract sebenar.</li>
+            <li>Metadata boleh disambung ke IPFS atau storage pilihan.</li>
+            <li>Checkout boleh dihubungkan ke wallet Web3.</li>
+          </ul>
+        </div>
+
+        <form class="mint-form" id="mintForm">
+          <label>
+            Nama koleksi
+            <input name="title" type="text" placeholder="Contoh: Konvo UiTM #024" required />
+          </label>
+          <label>
+            Kreator
+            <input name="creator" type="text" placeholder="Nama jurugambar / studio" required />
+          </label>
+          <div class="form-row">
+            <label>
+              Kategori
+              <select name="category" required>
+                <option value="Konvokesyen">Konvokesyen</option>
+                <option value="Majlis">Majlis</option>
+                <option value="Potret">Potret</option>
+                <option value="Travel">Travel</option>
+                <option value="Landscape">Landscape</option>
+                <option value="Street">Street</option>
+                <option value="Food">Food</option>
+                <option value="Product">Product</option>
+                <option value="Sports">Sports</option>
+                <option value="Wildlife">Wildlife</option>
+                <option value="Architecture">Architecture</option>
+                <option value="Documentary">Documentary</option>
+                <option value="Mobilegraphy">Mobilegraphy</option>
+              </select>
+            </label>
+            <label>
+              Harga ETH
+              <input name="price" type="number" min="0.01" step="0.01" placeholder="0.25" required />
+            </label>
+          </div>
+          <label>
+            URL gambar
+            <input
+              name="image"
+              type="url"
+              placeholder="https://..."
+              value="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?auto=format&fit=crop&w=1000&q=80"
+              required
+            />
+          </label>
+          <label>
+            Deskripsi
+            <textarea name="description" rows="4" placeholder="Cerita ringkas tentang foto ini"></textarea>
+          </label>
+          <button class="primary-action full" type="submit">Mint & list item</button>
+          <p class="form-note" id="formNote" role="status"></p>
+        </form>
+      </section>
+
+      <section class="section protection-section page-section" id="protection" data-page="protection">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Photo protection</p>
+            <h2>Kurangkan risiko gambar dicuri</h2>
+          </div>
+        </div>
+        <div class="protection-grid">
+          <article>
+            <span>01</span>
+            <h3>Preview watermark</h3>
+            <p>Marketplace hanya papar versi preview berwatermark dan resolusi rendah.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Original file locked</h3>
+            <p>Fail resolusi penuh hanya boleh dimuat turun selepas bayaran disahkan.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>Signed download URL</h3>
+            <p>Pautan download tamat tempoh dan diikat kepada akaun pembeli.</p>
+          </article>
+          <article>
+            <span>04</span>
+            <h3>Ownership record</h3>
+            <p>Blockchain dan metadata simpan bukti pemilikan, pencipta asal, dan transaksi.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section security-section page-section" id="security" data-page="security">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Platform security</p>
+            <h2>Ciri-ciri keselamatan</h2>
+          </div>
+        </div>
+        <div class="security-grid">
+          <article>
+            <span class="security-icon">ID</span>
+            <h3>KYC creator</h3>
+            <p>Creator boleh disahkan sebelum menjual untuk kurangkan akaun palsu dan pelanggaran hak cipta.</p>
+          </article>
+          <article>
+            <span class="security-icon">2F</span>
+            <h3>2FA login</h3>
+            <p>Owner, creator dan buyer boleh guna two-factor authentication untuk lindungi akaun.</p>
+          </article>
+          <article>
+            <span class="security-icon">EX</span>
+            <h3>EXIF & metadata check</h3>
+            <p>Semakan metadata membantu sahkan foto datang daripada kamera DSLR atau mobile phone.</p>
+          </article>
+          <article>
+            <span class="security-icon">IP</span>
+            <h3>Copyright review</h3>
+            <p>Workflow review dan takedown disediakan jika foto yang dimuat naik bukan milik creator.</p>
+          </article>
+          <article>
+            <span class="security-icon">PG</span>
+            <h3>Secure payment</h3>
+            <p>Payment gateway, webhook verification dan rekod transaksi digunakan untuk elak payment fraud.</p>
+          </article>
+          <article>
+            <span class="security-icon">VA</span>
+            <h3>Vault storage</h3>
+            <p>Fail original disimpan secara private dan hanya dibuka melalui signed URL selepas pembelian.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section growth-section page-section" id="growth" data-page="growth">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Growth ideas</p>
+            <h2>Ciri yang boleh buat platform lebih mendapat sambutan</h2>
+          </div>
+        </div>
+        <div class="growth-layout">
+          <article class="growth-feature">
+            <span class="metric-label">Signature idea</span>
+            <h3>Campus & event official drops</h3>
+            <p>
+              Partner dengan universiti, sekolah, event organizer dan studio supaya gambar rasmi
+              konvokesyen, sukan, majlis, dan festival dijual sebagai koleksi verified.
+            </p>
+            <a class="secondary-action" href="#cms" data-page="cms">Urus dari CMS</a>
+          </article>
+          <div class="growth-grid">
+            <article>
+              <span>01</span>
+              <h3>Verified photographer badge</h3>
+              <p>Badge untuk creator yang lulus semakan identiti, portfolio dan hak cipta.</p>
+            </article>
+            <article>
+              <span>02</span>
+              <h3>Limited edition photo drop</h3>
+              <p>Foto dijual dalam edisi terhad seperti 1/1, 1/10 atau time-limited sale.</p>
+            </article>
+            <article>
+              <span>03</span>
+              <h3>Referral rewards</h3>
+              <p>Buyer dan creator dapat kredit apabila ajak pengguna baru beli atau upload foto.</p>
+            </article>
+            <article>
+              <span>04</span>
+              <h3>Photo contest marketplace</h3>
+              <p>Pertandingan mingguan untuk mobilegraphy, street, food, landscape dan documentary.</p>
+            </article>
+            <article>
+              <span>05</span>
+              <h3>Buyer utility perks</h3>
+              <p>Pemilik NFT boleh dapat print discount, event pass, atau akses download premium.</p>
+            </article>
+            <article>
+              <span>06</span>
+              <h3>Creator storefront</h3>
+              <p>Setiap jurugambar ada profile dan mini-shop untuk bina followers dan recurring sales.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section profit-section page-section" id="profit" data-page="profit">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Business model</p>
+            <h2>Bagaimana owner platform dapat profit</h2>
+          </div>
+        </div>
+        <div class="profit-grid">
+          <article>
+            <span class="metric-label">Primary sale fee</span>
+            <strong id="primaryFeeLabel">7%</strong>
+            <p>Platform ambil komisen setiap kali NFT dijual kali pertama.</p>
+          </article>
+          <article>
+            <span class="metric-label">Mint / listing fee</span>
+            <strong id="listingFeeLabel">0.01 ETH</strong>
+            <p>Yuran kecil apabila kreator mint dan senaraikan foto baru.</p>
+          </article>
+          <article>
+            <span class="metric-label">Secondary royalty share</span>
+            <strong id="royaltyShareLabel">2%</strong>
+            <p>Bahagian platform daripada jualan semula di marketplace.</p>
+          </article>
+          <article>
+            <span class="metric-label">Estimated platform profit</span>
+            <strong id="platformProfitMetric">0.00 ETH</strong>
+            <p>Jumlah simulasi hasil owner berdasarkan setting semasa.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section cms-section page-section" id="cms" data-page="cms">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CMS & management</p>
+            <h2>Portal owner dan pengguna</h2>
+          </div>
+        </div>
+
+        <div class="cms-tabs" role="tablist" aria-label="CMS portals">
+          <button class="tab-button active" type="button" data-panel="ownerPanel">Owner CMS</button>
+          <button class="tab-button" type="button" data-panel="creatorPanel">Creator Portal</button>
+          <button class="tab-button" type="button" data-panel="buyerPanel">Buyer Portal</button>
+        </div>
+
+        <div class="cms-panel active" id="ownerPanel">
+          <div class="cms-layout">
+            <aside class="cms-sidebar" aria-label="Owner controls">
+              <button class="side-link active" type="button">Overview</button>
+              <button class="side-link" type="button">Users</button>
+              <button class="side-link" type="button">Listings</button>
+              <button class="side-link" type="button">Payouts</button>
+              <button class="side-link" type="button">Disputes</button>
+            </aside>
+            <div class="cms-content">
+              <div class="cms-metrics">
+                <article>
+                  <span class="metric-label">Platform wallet</span>
+                  <strong id="ownerWalletMetric">0.00 ETH</strong>
+                </article>
+                <article>
+                  <span class="metric-label">Pending payout</span>
+                  <strong id="pendingPayoutMetric">0.00 ETH</strong>
+                </article>
+                <article>
+                  <span class="metric-label">Active creators</span>
+                  <strong id="creatorMetric">6</strong>
+                </article>
+              </div>
+
+              <form class="settings-form" id="feeSettingsForm">
+                <h3>Fee settings</h3>
+                <div class="form-row">
+                  <label>
+                    Platform commission %
+                    <input name="platformFee" type="number" min="0" max="30" step="0.5" value="7" />
+                  </label>
+                  <label>
+                    Mint/listing fee ETH
+                    <input name="listingFee" type="number" min="0" step="0.001" value="0.01" />
+                  </label>
+                  <label>
+                    Secondary share %
+                    <input name="secondaryShare" type="number" min="0" max="10" step="0.5" value="2" />
+                  </label>
+                </div>
+                <button class="primary-action" type="submit">Update fees</button>
+                <p class="form-note" id="settingsNote" role="status"></p>
+              </form>
+
+              <div class="table-wrap">
+                <div class="table-heading">
+                  <h3>Recent transactions</h3>
+                  <span id="transactionCount">0 records</span>
+                </div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Buyer</th>
+                      <th>Payment</th>
+                      <th>Gross</th>
+                      <th>Platform</th>
+                      <th>Creator payout</th>
+                    </tr>
+                  </thead>
+                  <tbody id="transactionTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cms-panel" id="creatorPanel">
+          <div class="portal-grid">
+            <article>
+              <span class="metric-label">Creator earnings</span>
+              <strong id="creatorEarningsMetric">0.00 ETH</strong>
+              <p>Payout bersih selepas komisen platform.</p>
+            </article>
+            <article>
+              <span class="metric-label">My listings</span>
+              <strong id="creatorListingsMetric">0</strong>
+              <p>Listing aktif dan menunggu pembeli.</p>
+            </article>
+            <article>
+              <span class="metric-label">Approval</span>
+              <strong>Manual</strong>
+              <p>Owner boleh review foto, hak cipta dan metadata sebelum publish.</p>
+            </article>
+          </div>
+          <div class="creator-tools">
+            <h3>Creator management</h3>
+            <div class="tool-list">
+              <span>Upload photo & metadata</span>
+              <span>Set price and royalty</span>
+              <span>Track sales and payout</span>
+              <span>Request withdrawal</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cms-panel" id="buyerPanel">
+          <div class="portal-grid">
+            <article>
+              <span class="metric-label">Owned NFTs</span>
+              <strong id="ownedMetric">0</strong>
+              <p>NFT yang dibeli melalui wallet simulasi.</p>
+            </article>
+            <article>
+              <span class="metric-label">Spend</span>
+              <strong id="buyerSpendMetric">0.00 ETH</strong>
+              <p>Jumlah pembelian dalam sesi semasa.</p>
+            </article>
+            <article>
+              <span class="metric-label">Resell ready</span>
+              <strong>Enabled</strong>
+              <p>Pembeli boleh senaraikan semula NFT jika fungsi secondary market diaktifkan.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section dashboard page-section" id="dashboard" data-page="dashboard">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Operations</p>
+            <h2>Dashboard ringkas</h2>
+          </div>
+        </div>
+        <div class="dashboard-grid">
+          <article>
+            <span class="metric-label">Revenue</span>
+            <strong id="revenueMetric">3.82 ETH</strong>
+            <p>Anggaran hasil jualan kreator bulan ini.</p>
+          </article>
+          <article>
+            <span class="metric-label">Listed</span>
+            <strong id="listedMetric">8</strong>
+            <p>Foto NFT aktif dalam marketplace.</p>
+          </article>
+          <article>
+            <span class="metric-label">Royalty</span>
+            <strong>7.5%</strong>
+            <p>Kadar royalti default untuk jualan sekunder.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-brand">
+        <span class="brand-mark">P</span>
+        <div>
+          <strong>Photora NFT Marketplace</strong>
+          <span>Real photo NFT marketplace</span>
+        </div>
+      </div>
+      <div class="footer-links">
+        <span>Platform</span>
+        <a href="#market" data-page="market">Discover</a>
+        <a href="#cms" data-page="cms">CMS</a>
+        <a href="#dashboard" data-page="dashboard">Dashboard</a>
+      </div>
+      <div class="footer-contact">
+        <span>Contact</span>
+        <a href="mailto:hallo@mintora.io">hallo@mintora.io</a>
+      </div>
+      <div class="footer-social">
+        <span>Social</span>
+        <div class="social-links" aria-label="Social media">
+          <a href="#" aria-label="Instagram">IG</a>
+          <a href="#" aria-label="X">X</a>
+          <a href="#" aria-label="LinkedIn">IN</a>
+          <a href="#" aria-label="TikTok">TT</a>
+        </div>
+        <a class="developer-link" href="https://nexio.my" target="_blank" rel="noreferrer">Developed by nexio.my</a>
+      </div>
+      <div class="footer-compliance">
+        <div class="compliance-badges" aria-label="Security and compliance status">
+          <span>SSL Secure</span>
+          <span>2FA Ready</span>
+          <span>Secure Checkout</span>
+          <span>Private Vault</span>
+        </div>
+        <div class="footer-mini-links">
+          <a href="#security" data-page="security">Security</a>
+          <a href="#protection" data-page="protection">Protection</a>
+          <a href="mailto:hallo@mintora.io">Support</a>
+        </div>
+      </div>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <aside class="chat-widget" id="chatWidget" aria-label="Virtual support chat">
+      <button class="chat-toggle" id="chatToggle" type="button" aria-expanded="false" aria-controls="chatPanel">
+        Chat
+      </button>
+      <div class="chat-panel" id="chatPanel" hidden>
+        <div class="chat-header">
+          <div>
+            <strong>Photora Assist</strong>
+            <span>Virtual helper</span>
+          </div>
+          <button id="chatClose" type="button" aria-label="Close chat">x</button>
+        </div>
+        <div class="chat-messages" id="chatMessages" aria-live="polite">
+          <p class="bot-message">Hi, saya boleh bantu tentang cara beli foto, upload foto asli, payment MYR, dan protection.</p>
+        </div>
+        <div class="quick-replies">
+          <button type="button" data-reply="Boleh beli guna MYR?">Beli guna MYR</button>
+          <button type="button" data-reply="Bagaimana upload foto asli?">Upload foto</button>
+          <button type="button" data-reply="Bagaimana gambar dilindungi?">Protection</button>
+        </div>
+      </div>
+    </aside>
+
+    <script src="app.js?v=3.2.0"></script>
+  </body>
+</html>
