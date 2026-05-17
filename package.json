@@ -1,0 +1,13 @@
+{
+  "name": "photora-nft-marketplace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Photora NFT Marketplace static frontend with ToyyibPay checkout backend.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
