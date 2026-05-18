@@ -73,7 +73,7 @@ const seedPhotos = [
     price_eth: 0.42,
     price_myr: 6300,
     image_url: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=900&q=80",
-    description: "Foto konvokesyen asli untuk koleksi digital.",
+    description: "Original convocation photo for digital collections.",
     source_type: "dslr",
     status: "approved",
   },
@@ -84,7 +84,7 @@ const seedPhotos = [
     price_eth: 0.35,
     price_myr: 5250,
     image_url: "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=900&q=80",
-    description: "Street photography daripada kamera sebenar.",
+    description: "Street photography from a real camera.",
     source_type: "mobilegraphy",
     status: "approved",
   },
@@ -95,7 +95,7 @@ const seedPhotos = [
     price_eth: 0.14,
     price_myr: 2100,
     image_url: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=80",
-    description: "Mobilegraphy asli untuk marketplace Photora.",
+    description: "Original mobilegraphy for the Photora marketplace.",
     source_type: "mobilegraphy",
     status: "approved",
   },
@@ -103,36 +103,36 @@ const seedPhotos = [
 
 const seedSlides = [
   {
-    eyebrow: "Platform foto NFT rasmi",
-    title: "Meraikan Foto Asli, Mengiktiraf Kreator.",
+    eyebrow: "Official photo NFT platform",
+    title: "Celebrate Real Photography. Verify Every Creator.",
     body:
-      "Photora NFT Marketplace membantu jurugambar DSLR dan mobilegraphy menjual foto sebenar sebagai aset digital yang boleh disahkan.",
+      "Photora NFT Marketplace helps DSLR and mobile photography creators sell real photos as verified digital assets.",
     image_url: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=2200&q=84",
-    primary_label: "Teroka Marketplace",
+    primary_label: "Explore Marketplace",
     primary_page: "market",
-    secondary_label: "Panduan Kreator",
+    secondary_label: "Creator Guide",
     secondary_page: "mint",
     sort_order: 1,
     status: "active",
   },
   {
     eyebrow: "NFT photo drop",
-    title: "Jual koleksi konvokesyen, event dan mobilegraphy.",
+    title: "Sell convocation, event and mobilegraphy collections.",
     body:
-      "Creator boleh upload foto, admin semak keaslian, dan buyer boleh bayar dengan wallet atau ToyyibPay.",
+      "Creators can upload photos, admins can review authenticity, and buyers can pay with wallet or ToyyibPay.",
     image_url: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=2200&q=84",
-    primary_label: "Mint Foto",
+    primary_label: "Mint Photo",
     primary_page: "mint",
-    secondary_label: "Semak Keaslian",
+    secondary_label: "Verify Authenticity",
     secondary_page: "dashboard",
     sort_order: 2,
     status: "active",
   },
   {
     eyebrow: "Verified real photo",
-    title: "Setiap foto ada kod keaslian Photora.",
+    title: "Every photo has a Photora authenticity code.",
     body:
-      "Marketplace ini fokus kepada foto sebenar daripada kamera DSLR dan mobile phone, bukan gambar AI atau manipulasi berat.",
+      "This marketplace focuses on real photos from DSLR and mobile phone cameras, not AI images or heavy manipulation.",
     image_url: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=2200&q=84",
     primary_label: "Discover",
     primary_page: "market",
@@ -176,14 +176,14 @@ function buildOwnershipCertificate(photo, ownership = null) {
   const certificateUrl = makeAppUrl(certificateUrlFor(photo));
   const qrUrl = qrImageUrlFor(certificateUrl);
   const originalOwner = ownership?.original_owner || photo.creator_name || "Photora Creator";
-  const currentOwner = ownership?.new_owner || ownership?.buyer_name || "Belum ditukar milik / marketplace owner";
+  const currentOwner = ownership?.new_owner || ownership?.buyer_name || "Not transferred / marketplace owner";
   const ledgerHash = ownership?.ledger_hash || makePerceptualHash(`${photo.authenticity_code || photo.id}|${originalOwner}|${currentOwner}`);
   return `<!doctype html>
-<html lang="ms">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Sijil Pemilikan Photora - ${escapeHtml(photo.title)}</title>
+    <title>Photora Ownership Certificate - ${escapeHtml(photo.title)}</title>
     <style>
       body{margin:0;font-family:Inter,Arial,sans-serif;background:#f4f6fa;color:#111827}
       main{max-width:860px;margin:40px auto;padding:28px;background:white;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 18px 50px rgba(15,23,42,.08)}
@@ -202,30 +202,30 @@ function buildOwnershipCertificate(photo, ownership = null) {
   <body>
     <main>
       <span class="seal">PHOTORA VERIFIED CERTIFICATE</span>
-      <h1>Sijil Ketulenan & Pemilikan Foto</h1>
-      <p>Asset ini ditemui dalam rekod Photora dan mempunyai kod pengesahan berdaftar. QR ini boleh discan semula untuk melihat sijil pemilikan.</p>
+      <h1>Photo Authenticity & Ownership Certificate</h1>
+      <p>This asset was found in Photora records and has a registered verification code. Scan this QR again to view the ownership certificate.</p>
       <div class="cert-grid">
         <img class="asset" src="${escapeHtml(photo.image_url || "assets/photoralogo.png")}" alt="" />
         <img class="qr" src="${escapeHtml(qrUrl)}" alt="QR certificate" />
       </div>
       <dl>
         <dt>Title</dt><dd>${escapeHtml(photo.title)}</dd>
-        <dt>Pemilik Asal</dt><dd>${escapeHtml(originalOwner)}</dd>
-        <dt>Pemilik Baru</dt><dd>${escapeHtml(currentOwner)}</dd>
+        <dt>Original Owner</dt><dd>${escapeHtml(originalOwner)}</dd>
+        <dt>New Owner</dt><dd>${escapeHtml(currentOwner)}</dd>
         <dt>Category</dt><dd>${escapeHtml(photo.category || "-")}</dd>
         <dt>Authenticity Code</dt><dd>${escapeHtml(photo.authenticity_code || "-")}</dd>
         <dt>Ledger Hash</dt><dd class="hash">${escapeHtml(ledgerHash)}</dd>
         <dt>Status</dt><dd>${escapeHtml(photo.status || "registered")}</dd>
         <dt>Verified At</dt><dd>${new Date().toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })}</dd>
       </dl>
-      <a class="claim" href="/#login">Register / login untuk claim royalti</a>
+      <a class="claim" href="/#login">Register / log in to claim royalty</a>
     </main>
   </body>
 </html>`;
 }
 
 function buildReceiptPdf(order, type = "buyer") {
-  const receiptType = type === "seller" ? "Resit Jualan Creator" : "Resit Pembelian";
+  const receiptType = type === "seller" ? "Creator Sales Receipt" : "Purchase Receipt";
   const receiptNo = `${type === "seller" ? "SALE" : "BUY"}-${order.order_ref}`;
   const gross = Number(order.amount_myr || 0);
   const platformFee = Number(order.platform_fee_myr || 0);
@@ -426,11 +426,11 @@ async function sendSmtpMail({ to, subject, text }) {
 }
 
 async function sendAccountLink(user, type, url) {
-  const subject = type === "email_verify" ? "Sahkan akaun Photora" : "Reset password Photora";
+  const subject = type === "email_verify" ? "Verify your Photora account" : "Reset your Photora password";
   const message =
     type === "email_verify"
-      ? `Klik link ini untuk sahkan akaun Photora anda: ${url}`
-      : `Klik link ini untuk reset password Photora anda: ${url}`;
+      ? `Click this link to verify your Photora account: ${url}`
+      : `Click this link to reset your Photora password: ${url}`;
 
   console.log(`[Photora notification] to=${user.email} subject="${subject}" ${url}`);
 
@@ -568,9 +568,9 @@ function loadLocalData() {
         title: "Photora portal kini menyokong photo authenticity scan",
         slug: makeSlug("Photora portal kini menyokong photo authenticity scan"),
         category: "Platform",
-        excerpt: "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
+        excerpt: "Every registered photo has a unique Photora code for authenticity checks.",
         image_url: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80",
-        body: "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
+        body: "Every registered photo has a unique Photora code for authenticity checks.",
         status: "published",
         created_at: new Date().toISOString(),
       },
@@ -645,9 +645,9 @@ function loadLocalData() {
         title: "Photora portal kini menyokong photo authenticity scan",
         slug: makeSlug("Photora portal kini menyokong photo authenticity scan"),
         category: "Platform",
-        excerpt: "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
+        excerpt: "Every registered photo has a unique Photora code for authenticity checks.",
         image_url: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80",
-        body: "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
+        body: "Every registered photo has a unique Photora code for authenticity checks.",
         status: "published",
         created_at: new Date().toISOString(),
       },
@@ -976,9 +976,9 @@ function createLocalStore() {
         title: input.title,
         body: input.body,
         image_url: input.image_url,
-        primary_label: input.primary_label || "Teroka Marketplace",
+        primary_label: input.primary_label || "Explore Marketplace",
         primary_page: input.primary_page || "market",
-        secondary_label: input.secondary_label || "Panduan Kreator",
+        secondary_label: input.secondary_label || "Creator Guide",
         secondary_page: input.secondary_page || "mint",
         sort_order: Number(input.sort_order || data.slides.length + 1),
         status: input.status || "active",
@@ -1108,9 +1108,9 @@ async function seedNews(pool) {
     "Photora portal kini menyokong photo authenticity scan",
     makeSlug("Photora portal kini menyokong photo authenticity scan"),
     "Platform",
-    "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
+    "Every registered photo has a unique Photora code for authenticity checks.",
     "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80",
-    "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
+    "Every registered photo has a unique Photora code for authenticity checks.",
   ]);
 }
 
@@ -1464,9 +1464,9 @@ function createMysqlStore(pool) {
           input.title,
           input.body,
           input.image_url,
-          input.primary_label || "Teroka Marketplace",
+          input.primary_label || "Explore Marketplace",
           input.primary_page || "market",
-          input.secondary_label || "Panduan Kreator",
+          input.secondary_label || "Creator Guide",
           input.secondary_page || "mint",
           Number(input.sort_order || 0),
           input.status || "active",
@@ -1619,7 +1619,7 @@ async function handleAuth(req, res, pathname) {
     sendJson(res, 201, {
       user: publicUser(user),
       delivery,
-      message: "Akaun didaftarkan. Sila sahkan email sebelum login.",
+      message: "Account registered. Please verify your email before logging in.",
     });
     return true;
   }
@@ -1629,12 +1629,12 @@ async function handleAuth(req, res, pathname) {
     const token = await db.consumeAuthToken(url.searchParams.get("token") || "", "email_verify");
     if (!token) {
       res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
-      res.end("<h1>Link tidak sah</h1><p>Link pengesahan tamat tempoh atau sudah digunakan.</p>");
+      res.end("<h1>Invalid link</h1><p>The verification link has expired or has already been used.</p>");
       return true;
     }
     await db.setEmailVerified(token.user_id);
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end('<h1>Email berjaya disahkan</h1><p>Akaun Photora anda sudah aktif. <a href="/#login">Login sekarang</a>.</p>');
+    res.end('<h1>Email verified</h1><p>Your Photora account is now active. <a href="/#login">Log in now</a>.</p>');
     return true;
   }
 
@@ -1642,11 +1642,11 @@ async function handleAuth(req, res, pathname) {
     const payload = await readJson(req);
     const user = await db.getUserByEmail(payload.email || "");
     if (!user) {
-      sendJson(res, 200, { ok: true, message: "Jika akaun wujud, link reset akan dihantar." });
+      sendJson(res, 200, { ok: true, message: "If the account exists, a reset link will be sent." });
       return true;
     }
     const delivery = await issueAccountToken(db, user, "password_reset");
-    sendJson(res, 200, { ok: true, delivery, message: "Link reset password telah disediakan." });
+    sendJson(res, 200, { ok: true, delivery, message: "Password reset link is ready." });
     return true;
   }
 
@@ -1655,14 +1655,14 @@ async function handleAuth(req, res, pathname) {
     const token = String(url.searchParams.get("token") || "");
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(`<!doctype html>
-      <html lang="ms">
+      <html lang="en">
         <head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reset Password Photora</title></head>
         <body style="font-family:Inter,Arial,sans-serif;background:#f8fafc;margin:0;display:grid;min-height:100vh;place-items:center;color:#0f172a">
           <form id="reset" style="display:grid;gap:14px;width:min(420px,92vw);padding:28px;border:1px solid #e5e7eb;border-radius:18px;background:white;box-shadow:0 20px 70px rgba(15,23,42,.12)">
             <h1 style="margin:0;font-size:1.8rem">Reset password</h1>
-            <p style="margin:0;color:#64748b">Masukkan password baharu untuk akaun Photora anda.</p>
-            <input name="password" type="password" required minlength="8" placeholder="Password baharu" style="min-height:48px;border:1px solid #dbe3ef;border-radius:12px;padding:0 14px">
-            <button style="min-height:48px;border:0;border-radius:12px;background:#010066;color:white;font-weight:900">Simpan password</button>
+            <p style="margin:0;color:#64748b">Enter a new password for your Photora account.</p>
+            <input name="password" type="password" required minlength="8" placeholder="New password" style="min-height:48px;border:1px solid #dbe3ef;border-radius:12px;padding:0 14px">
+            <button style="min-height:48px;border:0;border-radius:12px;background:#010066;color:white;font-weight:900">Save password</button>
             <p id="note" style="margin:0;color:#64748b"></p>
           </form>
           <script>
@@ -1709,7 +1709,7 @@ async function handleAuth(req, res, pathname) {
     }
     if (!user.email_verified && user.role === "user") {
       const delivery = await issueAccountToken(db, user, "email_verify");
-      sendJson(res, 403, { error: "Sila sahkan email sebelum login.", delivery });
+      sendJson(res, 403, { error: "Please verify your email before logging in.", delivery });
       return true;
     }
     const token = createSession(user);
@@ -1820,7 +1820,7 @@ async function handleApi(req, res, pathname) {
     const photo = await db.verifyPhoto(decodeURIComponent(certificateMatch[1]));
     if (!photo) {
       res.writeHead(404, { "Content-Type": "text/html; charset=utf-8" });
-      res.end("<h1>Sijil tidak ditemui</h1><p>Asset ini tidak dijumpai dalam rekod Photora.</p>");
+      res.end("<h1>Certificate not found</h1><p>This asset was not found in Photora records.</p>");
       return true;
     }
     const ownership = await db.getLatestOwnershipByPhoto(photo.id);
@@ -1842,13 +1842,13 @@ async function handleApi(req, res, pathname) {
   if (req.method === "POST" && pathname === "/api/royalty/claim") {
     const user = await currentUser(req);
     if (!user) {
-      sendJson(res, 401, { error: "Register atau login diperlukan untuk claim royalti." });
+      sendJson(res, 401, { error: "Register or log in to claim royalty." });
       return true;
     }
     const payload = await readJson(req);
     sendJson(res, 200, {
       ok: true,
-      message: "Claim royalti direkod. Admin Photora akan semak pemilikan dan wallet payout.",
+      message: "Royalty claim recorded. Photora admin will review ownership and payout wallet details.",
       hash: makeLedgerHash({ order_ref: payload.ledger_hash || payload.authenticity_code || "ROYALTY", buyer_id: user.id, buyer_email: user.email }),
     });
     return true;

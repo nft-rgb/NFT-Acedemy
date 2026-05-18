@@ -285,11 +285,11 @@ function setCheckoutReceiptLinks(receipts) {
   }
   checkoutReceiptLinks.hidden = false;
   checkoutReceiptLinks.innerHTML = `
-    <strong>Checkout dan resit</strong>
-    ${receipts.checkoutUrl ? `<a href="${escapeHtml(receipts.checkoutUrl)}" target="_blank" rel="noopener">Buka halaman bayaran ToyyibPay</a>` : ""}
-    ${receipts.buyerReceiptUrl ? `<a href="${escapeHtml(receipts.buyerReceiptUrl)}" target="_blank" rel="noopener">Resit pembelian</a>` : ""}
-    ${receipts.sellerReceiptUrl ? `<a href="${escapeHtml(receipts.sellerReceiptUrl)}" target="_blank" rel="noopener">Resit jualan creator</a>` : ""}
-    ${receipts.certificateUrl ? `<a href="${escapeHtml(receipts.certificateUrl)}" target="_blank" rel="noopener">Sijil pemilikan</a>` : ""}
+    <strong>Checkout and receipts</strong>
+    ${receipts.checkoutUrl ? `<a href="${escapeHtml(receipts.checkoutUrl)}" target="_blank" rel="noopener">Open ToyyibPay payment page</a>` : ""}
+    ${receipts.buyerReceiptUrl ? `<a href="${escapeHtml(receipts.buyerReceiptUrl)}" target="_blank" rel="noopener">Purchase receipt</a>` : ""}
+    ${receipts.sellerReceiptUrl ? `<a href="${escapeHtml(receipts.sellerReceiptUrl)}" target="_blank" rel="noopener">Creator sales receipt</a>` : ""}
+    ${receipts.certificateUrl ? `<a href="${escapeHtml(receipts.certificateUrl)}" target="_blank" rel="noopener">Ownership certificate</a>` : ""}
   `;
 }
 
@@ -315,8 +315,8 @@ function setCheckoutSuccess(order) {
     return;
   }
   checkoutSuccess.hidden = false;
-  checkoutSuccessTitle.textContent = `Order ${order.orderId || "-"} direkod`;
-  checkoutSuccessText.textContent = `${order.title || "Pembelian digital"} bernilai ${formatMyr(order.amountMyr || 0)} sedang menunggu bayaran ToyyibPay. Cart telah dikosongkan selepas order dicipta.`;
+  checkoutSuccessTitle.textContent = `Order ${order.orderId || "-"} recorded`;
+  checkoutSuccessText.textContent = `${order.title || "Digital purchase"} worth ${formatMyr(order.amountMyr || 0)} is awaiting ToyyibPay payment. The cart has been cleared after the order was created.`;
 }
 
 function makeSummary(text, length = 145) {
@@ -333,7 +333,7 @@ function readFileAsDataUrl(file) {
     }
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(new Error("Gambar news tidak dapat dibaca."));
+    reader.onerror = () => reject(new Error("News image cannot be read."));
     reader.readAsDataURL(file);
   });
 }
@@ -345,11 +345,11 @@ function readPassportImageAsDataUrl(file) {
       return;
     }
     if (file.size > 8 * 1024 * 1024) {
-      reject(new Error("Saiz gambar terlalu besar. Sila pilih gambar bawah 8MB."));
+      reject(new Error("Image size is too large. Please choose an image below 8MB."));
       return;
     }
     if (!file.type.startsWith("image/")) {
-      reject(new Error("Sila pilih fail gambar sahaja."));
+      reject(new Error("Please choose an image file only."));
       return;
     }
     const image = new Image();
@@ -387,7 +387,7 @@ function readPassportImageAsDataUrl(file) {
     };
     image.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      reject(new Error("Gambar profile tidak dapat dibaca. Sila guna JPG, PNG atau WebP."));
+      reject(new Error("Profile image cannot be read. Please use JPG, PNG or WebP."));
     };
     image.src = objectUrl;
   });
@@ -454,14 +454,14 @@ function updateAccountUi() {
   if (profileAvatarPreview) profileAvatarPreview.src = avatarSrc;
   if (portalAccountName && portalAccountEmail) {
     portalAccountName.textContent = currentUser?.name || "Photora Account";
-    portalAccountEmail.textContent = currentUser?.email || "Login diperlukan";
+    portalAccountEmail.textContent = currentUser?.email || "Login required";
   }
   if (logoutButton) {
     logoutButton.hidden = !currentUser;
   }
   roleDashboardTitle.textContent = currentUser
     ? `Dashboard ${currentUser.role.replace("_", " ")}`
-    : "Dashboard pengguna";
+    : "User dashboard";
   if (currentUser && profileForm && walletForm) {
     profileForm.elements.name.value = currentUser.name || "";
     profileForm.elements.email.value = currentUser.email || "";
@@ -521,7 +521,7 @@ async function loadPhotos() {
       renderCards();
     }
   } catch {
-    showToast("Guna data demo kerana database belum tersedia.");
+    showToast("Using demo data because the database is not available yet.");
   }
 }
 
@@ -547,7 +547,7 @@ async function loadCryptoPrices() {
       })
       .join("");
   } catch {
-    cryptoPriceList.innerHTML = "<span>Harga crypto belum tersedia.</span>";
+    cryptoPriceList.innerHTML = "<span>Crypto prices are not available yet.</span>";
   }
 }
 
@@ -591,9 +591,9 @@ async function loadNews() {
             },
           )
           .join("")
-      : '<p class="empty-state">Belum ada news platform.</p>';
+    : '<p class="empty-state">No platform news yet.</p>';
   } catch {
-    newsFeed.innerHTML = '<p class="empty-state">News belum tersedia.</p>';
+    newsFeed.innerHTML = '<p class="empty-state">News is not available yet.</p>';
   }
 }
 
@@ -617,10 +617,10 @@ function applyHeroSlide(index) {
   heroEyebrow.textContent = slide.eyebrow;
   heroTitle.textContent = slide.title;
   heroBody.textContent = slide.body;
-  heroPrimaryAction.textContent = slide.primary_label || "Teroka Marketplace";
+  heroPrimaryAction.textContent = slide.primary_label || "Explore Marketplace";
   heroPrimaryAction.dataset.page = slide.primary_page || "market";
   heroPrimaryAction.href = `#${heroPrimaryAction.dataset.page}`;
-  heroSecondaryAction.textContent = slide.secondary_label || "Panduan Kreator";
+  heroSecondaryAction.textContent = slide.secondary_label || "Creator Guide";
   heroSecondaryAction.dataset.page = slide.secondary_page || "mint";
   heroSecondaryAction.href = `#${heroSecondaryAction.dataset.page}`;
   heroSection.style.setProperty("--hero-image", `url("${String(slide.image_url).replace(/"/g, "%22")}")`);
@@ -665,7 +665,7 @@ function renderPhotoManager(photos = []) {
           </article>`,
         )
         .join("")
-    : '<p class="empty-state">Belum ada photo untuk review.</p>';
+    : '<p class="empty-state">No photos are pending review.</p>';
 }
 
 function renderMyListings(photos = []) {
@@ -679,15 +679,15 @@ function renderMyListings(photos = []) {
         .map(
           (photo) => `<article class="manager-row">
             <img src="${escapeHtml(photo.image_url)}" alt="" />
-            <div><strong>${escapeHtml(photo.title)}</strong><span>${escapeHtml(photo.status)} · ${formatMyr(Number(photo.price_myr || 0))} · ${Number(photo.price_eth || 0).toFixed(4)} ETH</span><small>Listing fee RM2. Service fee jualan 6%.</small></div>
+            <div><strong>${escapeHtml(photo.title)}</strong><span>${escapeHtml(photo.status)} · ${formatMyr(Number(photo.price_myr || 0))} · ${Number(photo.price_eth || 0).toFixed(4)} ETH</span><small>Listing fee RM2. Sales service fee 6%.</small></div>
             <div class="pricing-actions">
-              <input type="number" min="1" step="1" value="${Number(photo.price_myr || 0)}" data-price-myr="${photo.id}" aria-label="Harga MYR" />
+              <input type="number" min="1" step="1" value="${Number(photo.price_myr || 0)}" data-price-myr="${photo.id}" aria-label="MYR price" />
               <button type="button" data-update-price="${photo.id}">Update</button>
             </div>
           </article>`,
         )
         .join("")
-    : '<p class="empty-state">Belum ada listing milik akaun ini.</p>';
+    : '<p class="empty-state">No listings belong to this account yet.</p>';
 }
 
 function renderAssetLibrary(library = { bought: [], sold: [] }) {
@@ -702,19 +702,19 @@ function renderAssetLibrary(library = { bought: [], sold: [] }) {
             <img src="${escapeHtml(record.image_url || "assets/photoralogo.png")}" alt="" />
             <div>
               <strong>${escapeHtml(record.photo_title || record.order_ref || "Photora asset")}</strong>
-              <span>${record.type === "sold" ? "Dijual" : "Dibeli"} · ${escapeHtml(record.payment_status || "pending")} · ${formatMyr(Number(record.amount_myr || 0))}</span>
-              <small>Pemilik asal: ${escapeHtml(record.original_owner || "-")} · Pemilik baru: ${escapeHtml(record.new_owner || record.buyer_name || "-")}</small>
+              <span>${record.type === "sold" ? "Sold" : "Purchased"} · ${escapeHtml(record.payment_status || "pending")} · ${formatMyr(Number(record.amount_myr || 0))}</span>
+              <small>Original owner: ${escapeHtml(record.original_owner || "-")} · New owner: ${escapeHtml(record.new_owner || record.buyer_name || "-")}</small>
               <small>Hash ledger: ${escapeHtml(record.ledger_hash || "-")}</small>
             </div>
             <div class="manager-actions">
-              ${certificateUrl ? `<a href="${escapeHtml(certificateUrl)}" target="_blank" rel="noopener">Sijil</a>` : ""}
+              ${certificateUrl ? `<a href="${escapeHtml(certificateUrl)}" target="_blank" rel="noopener">Certificate</a>` : ""}
               ${absoluteCertificate ? `<a href="${escapeHtml(qrImageUrlFor(absoluteCertificate))}" target="_blank" rel="noopener">QR</a>` : ""}
-              <button type="button" data-claim-royalty="${escapeHtml(record.ledger_hash || record.authenticity_code || "")}">Claim royalti</button>
+              <button type="button" data-claim-royalty="${escapeHtml(record.ledger_hash || record.authenticity_code || "")}">Claim royalty</button>
             </div>
           </article>`;
         })
         .join("")
-    : '<p class="empty-state">Belum ada asset dibeli atau dijual. Selepas checkout, library pemilikan akan dipaparkan di sini.</p>';
+    : '<p class="empty-state">No purchased or sold assets yet. After checkout, the ownership library will appear here.</p>';
 }
 
 function renderUserManager(users = []) {
@@ -725,14 +725,14 @@ function renderUserManager(users = []) {
           (user) => `<article class="manager-row compact">
             <div><strong>${escapeHtml(user.name)}</strong><span>${escapeHtml(user.email)} · ${escapeHtml(user.role)} · ${escapeHtml(user.status)}</span></div>
             <div class="manager-actions">
-              <button type="button" data-user-role="user" data-user-id="${user.id}">Turun ke user</button>
-              <button type="button" data-user-role="admin" data-user-id="${user.id}">Lantik admin</button>
-              <button type="button" data-user-status="${user.status === "active" ? "suspended" : "active"}" data-user-id="${user.id}">${user.status === "active" ? "Tutup akses" : "Buka akses"}</button>
+              <button type="button" data-user-role="user" data-user-id="${user.id}">Downgrade to user</button>
+              <button type="button" data-user-role="admin" data-user-id="${user.id}">Appoint admin</button>
+              <button type="button" data-user-status="${user.status === "active" ? "suspended" : "active"}" data-user-id="${user.id}">${user.status === "active" ? "Disable access" : "Enable access"}</button>
             </div>
           </article>`,
         )
         .join("")
-    : '<p class="empty-state">Login sebagai super admin untuk lihat user.</p>';
+    : '<p class="empty-state">Log in as super admin to view users.</p>';
 }
 
 function renderOrderManager(orders = []) {
@@ -750,7 +750,7 @@ function renderOrderManager(orders = []) {
           </article>`,
         )
         .join("")
-    : '<p class="empty-state">Belum ada order direkodkan.</p>';
+    : '<p class="empty-state">No orders have been recorded yet.</p>';
 }
 
 function renderSlideList(slides = heroSlides) {
@@ -768,7 +768,7 @@ function renderSlideList(slides = heroSlides) {
           </article>`,
         )
         .join("")
-    : '<p class="empty-state">Belum ada slider.</p>';
+    : '<p class="empty-state">No sliders yet.</p>';
 }
 
 function renderNewsManager(posts = []) {
@@ -792,7 +792,7 @@ function renderNewsManager(posts = []) {
           `,
         )
         .join("")
-    : '<p class="empty-state">Belum ada news untuk diurus.</p>';
+    : '<p class="empty-state">No news posts to manage yet.</p>';
 }
 
 async function loadCmsData() {
@@ -873,9 +873,13 @@ function closeMobileMenu() {
 }
 
 function showPage(page, shouldUpdateHash = true) {
-  const targetPage = page || "market";
+  let targetPage = page || "market";
+  const requestedPage = targetPage;
+  if (![...pageSections].some((section) => section.dataset.page === targetPage)) {
+    targetPage = "market";
+  }
   if (["dashboard", "cms"].includes(targetPage) && !currentUser) {
-    showToast("Login dahulu untuk buka dashboard.");
+    showToast("Please log in to open the dashboard.");
     showPage("login", shouldUpdateHash);
     return;
   }
@@ -889,7 +893,7 @@ function showPage(page, shouldUpdateHash = true) {
   });
   closeMobileMenu();
 
-  if (shouldUpdateHash) {
+  if (shouldUpdateHash || requestedPage !== targetPage) {
     history.replaceState(null, "", `#${targetPage}`);
   }
 
@@ -897,7 +901,7 @@ function showPage(page, shouldUpdateHash = true) {
     checkoutTitle.textContent = lastCheckoutOrder.title || "Order Photora";
     checkoutEth.textContent = "Order MYR";
     checkoutMyr.textContent = formatMyr(lastCheckoutOrder.amountMyr || 0);
-    checkoutNote.textContent = "Order terakhir masih tersedia. Selesaikan bayaran atau buka resit di bawah.";
+    checkoutNote.textContent = "The latest order is still available. Complete payment or open the receipts below.";
     renderCheckoutItems([]);
     setCheckoutReceiptLinks(lastCheckoutOrder);
     setCheckoutSuccess(lastCheckoutOrder);
@@ -932,7 +936,7 @@ function selectCheckoutItem(item) {
   checkoutTitle.textContent = item.title;
   checkoutEth.textContent = formatPrice(item.price);
   checkoutMyr.textContent = formatMyr(selectedCheckoutItem.amountMyr);
-  checkoutNote.textContent = "Sedia untuk checkout cash MYR menggunakan ToyyibPay.";
+  checkoutNote.textContent = "Ready for MYR cash checkout via ToyyibPay.";
   try {
     showPage("checkout");
     forcePage("checkout");
@@ -940,7 +944,7 @@ function selectCheckoutItem(item) {
     cartNote.textContent = "Order cart dipindahkan ke checkout.";
     if (location.hash !== "#checkout") location.hash = "checkout";
   } catch (error) {
-    checkoutNote.textContent = `Checkout page gagal dibuka: ${error.message}`;
+    checkoutNote.textContent = `Checkout page failed to open: ${error.message}`;
   }
   renderCheckoutItems(selectedCheckoutItem.items);
   setCheckoutReceiptLinks(null);
@@ -1034,7 +1038,7 @@ function renderCart() {
           </article>`,
         )
         .join("")
-    : '<p class="empty-state">Cart masih kosong. Tambah foto dari marketplace.</p>';
+    : '<p class="empty-state">Your cart is empty. Add photos from the marketplace.</p>';
 }
 
 function renderCards() {
@@ -1052,7 +1056,7 @@ function renderCards() {
   if (filtered.length === 0) {
     const emptyState = document.createElement("p");
     emptyState.className = "empty-state";
-    emptyState.textContent = "Tiada NFT ditemui untuk carian ini.";
+    emptyState.textContent = "No NFTs found for this search.";
     grid.appendChild(emptyState);
     return;
   }
@@ -1104,7 +1108,7 @@ function renderCards() {
     buyButton.textContent = "Wallet";
     buyButton.addEventListener("click", () => {
       if (!walletConnected) {
-        showToast("Connect wallet dahulu sebelum membeli NFT.");
+        showToast("Connect your wallet before buying an NFT.");
         return;
       }
       transactions.unshift({
@@ -1115,7 +1119,7 @@ function renderCards() {
         type: "primary",
       });
       updateMetrics();
-      showToast(`${item.title} dibeli melalui wallet.`);
+      showToast(`${item.title} purchased through wallet.`);
     });
 
     const fiatButton = document.createElement("button");
@@ -1163,7 +1167,7 @@ authTabs.forEach((button) => {
 async function submitAuthForm() {
   const data = new FormData(authForm);
   const endpoint = authMode === "register" ? "/api/auth/register" : "/api/auth/login";
-  authNote.textContent = authMode === "register" ? "Mendaftar akaun..." : "Sedang log masuk...";
+  authNote.textContent = authMode === "register" ? "Registering account..." : "Logging in...";
   authSubmit.disabled = true;
   try {
     const result = await apiRequest(endpoint, {
@@ -1181,8 +1185,8 @@ async function submitAuthForm() {
       updateAccountUi();
       setAuthMode("login");
       authNote.innerHTML = result.delivery?.previewUrl
-        ? `Akaun didaftar. Sahkan email melalui link ini: <a href="${result.delivery.previewUrl}">Sahkan email</a>`
-        : "Akaun didaftar. Sila semak email untuk link pengesahan.";
+        ? `Account registered. Verify your email using this link: <a href="${result.delivery.previewUrl}">Verify email</a>`
+        : "Account registered. Please check your email for the verification link.";
     } else {
       currentUser = result.user;
       updateAccountUi();
@@ -1194,7 +1198,7 @@ async function submitAuthForm() {
     }
   } catch (error) {
     authNote.innerHTML = error.result?.delivery?.previewUrl
-      ? `${error.message} <a href="${error.result.delivery.previewUrl}">Sahkan email</a>`
+      ? `${error.message} <a href="${error.result.delivery.previewUrl}">Verify email</a>`
       : error.message;
   } finally {
     authSubmit.disabled = false;
@@ -1221,8 +1225,8 @@ resetForm.addEventListener("submit", async (event) => {
       body: JSON.stringify({ email: data.get("email") }),
     });
     resetNote.innerHTML = result.delivery?.previewUrl
-      ? `Link tersedia: <a href="${result.delivery.previewUrl}">Buka link reset</a>`
-      : "Jika akaun wujud, link reset telah dihantar ke email/WhatsApp.";
+      ? `Link available: <a href="${result.delivery.previewUrl}">Open reset link</a>`
+      : "If the account exists, a reset link has been sent to email/WhatsApp.";
     resetForm.reset();
   } catch (error) {
     resetNote.textContent = error.message;
@@ -1242,11 +1246,11 @@ profileForm.elements.avatar_file?.addEventListener("change", async (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
   try {
-    profileNote.textContent = "Memproses gambar passport...";
+    profileNote.textContent = "Processing passport photo...";
     const imageData = await readPassportImageAsDataUrl(file);
     profileForm.elements.avatar_url.value = imageData;
     if (profileAvatarPreview) profileAvatarPreview.src = imageData;
-    profileNote.textContent = "Gambar passport sedia untuk disimpan. Tekan Save profile.";
+    profileNote.textContent = "Passport photo is ready to save. Press Save profile.";
   } catch (error) {
     profileNote.textContent = error.message;
   }
@@ -1255,7 +1259,7 @@ profileForm.elements.avatar_file?.addEventListener("change", async (event) => {
 profileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!currentUser) {
-    profileNote.textContent = "Login dahulu untuk update profile.";
+    profileNote.textContent = "Please log in to update your profile.";
     showPage("login");
     return;
   }
@@ -1285,7 +1289,7 @@ profileForm.addEventListener("submit", async (event) => {
     });
     currentUser = result.user;
     updateAccountUi();
-    profileNote.textContent = "Profile dikemaskini.";
+    profileNote.textContent = "Profile updated.";
   } catch (error) {
     profileNote.textContent = error.message;
   }
@@ -1294,7 +1298,7 @@ profileForm.addEventListener("submit", async (event) => {
 walletForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!currentUser) {
-    walletNote.textContent = "Login dahulu untuk update wallet.";
+    walletNote.textContent = "Please log in to update your wallet.";
     showPage("login");
     return;
   }
@@ -1319,7 +1323,7 @@ walletForm.addEventListener("submit", async (event) => {
     });
     currentUser = result.user;
     updateAccountUi();
-    walletNote.textContent = "Wallet dikemaskini. LUNO disokong sebagai rujukan wallet crypto.";
+    walletNote.textContent = "Wallet updated. LUNO is supported as a crypto wallet reference.";
   } catch (error) {
     walletNote.textContent = error.message;
   }
@@ -1350,7 +1354,7 @@ document.querySelectorAll(".dashboard-jump").forEach((link) => {
 newsForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!currentUser || !["admin", "super_admin"].includes(currentUser.role)) {
-    newsNote.textContent = "Hanya admin atau super admin boleh urus news.";
+    newsNote.textContent = "Only admins or super admins can manage news.";
     showPage("login");
     return;
   }
@@ -1373,7 +1377,7 @@ newsForm.addEventListener("submit", async (event) => {
     });
     newsForm.reset();
     newsForm.elements.status.value = "published";
-    newsNote.textContent = newsId ? "News berjaya dikemaskini." : "News berjaya dipublish.";
+    newsNote.textContent = newsId ? "News updated successfully." : "News published successfully.";
     await loadNews();
     await loadCmsData();
   } catch (error) {
@@ -1385,7 +1389,7 @@ newNewsButton.addEventListener("click", () => {
   newsForm.reset();
   newsForm.elements.id.value = "";
   newsForm.elements.status.value = "published";
-  newsNote.textContent = "Sedia untuk post news baharu.";
+  newsNote.textContent = "Ready to create a new news post.";
 });
 
 portalNewsList.addEventListener("click", async (event) => {
@@ -1401,7 +1405,7 @@ portalNewsList.addEventListener("click", async (event) => {
     newsForm.elements.image_url.value = post.image_url || "";
     newsForm.elements.body.value = post.body || "";
     newsForm.elements.status.value = post.status || "published";
-    newsNote.textContent = "Sedang edit news. Tekan Publish news untuk simpan.";
+    newsNote.textContent = "Editing news. Press Publish news to save.";
     newsForm.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   if (deleteButton) {
@@ -1424,19 +1428,19 @@ async function handleScannerSubmit(event) {
   const imageFile = data.get("scan_image");
   let detectedQr = "";
   if (imageFile && imageFile.size) {
-    note.textContent = "Mencuba baca QR code daripada kamera/upload...";
+    note.textContent = "Trying to read the QR code from camera/upload...";
     detectedQr = await detectQrFromImage(imageFile);
   }
   const uploadedImage = imageFile && imageFile.size ? await readFileAsDataUrl(imageFile) : "";
   const query = data.get("query") || detectedQr || uploadedImage;
   if (!query) {
-    note.textContent = "Masukkan kod/URL atau upload gambar untuk scan.";
+    note.textContent = "Enter a code/URL or upload an image to scan.";
     return;
   }
   note.textContent = detectedQr
-    ? "QR code ditemui. Semakan sijil sedang dibuat..."
+    ? "QR code found. Checking certificate..."
     : uploadedImage
-      ? "AI-assisted scanner sedang analisis gambar..."
+      ? "AI-assisted scanner is analyzing the image..."
       : "Scanning authenticity code...";
   try {
     const result = await apiRequest("/api/photos/verify", {
@@ -1444,8 +1448,8 @@ async function handleScannerSubmit(event) {
       body: JSON.stringify({ query, mode: detectedQr ? "qr_code" : uploadedImage ? "camera_image" : "code_or_url" }),
     });
     note.innerHTML = result.valid
-      ? `Sah: ${escapeHtml(result.photo.title)} (${escapeHtml(result.photo.authenticity_code || "registered asset")}). <a href="${escapeHtml(result.certificateUrl)}" target="_blank" rel="noopener">Buka sijil pemilikan</a><br><small>${escapeHtml(result.aiAnalysis || "")}</small>`
-      : `Tidak ditemui dalam rekod Photora. ${escapeHtml(result.aiAnalysis || "Semak semula kod, URL atau gambar.")}`;
+      ? `Verified: ${escapeHtml(result.photo.title)} (${escapeHtml(result.photo.authenticity_code || "registered asset")}). <a href="${escapeHtml(result.certificateUrl)}" target="_blank" rel="noopener">Open ownership certificate</a><br><small>${escapeHtml(result.aiAnalysis || "")}</small>`
+      : `Not found in Photora records. ${escapeHtml(result.aiAnalysis || "Check the code, URL or image again.")}`;
   } catch (error) {
     note.textContent = error.message;
   }
@@ -1490,7 +1494,7 @@ portalPhotoList.addEventListener("click", async (event) => {
     });
     await loadPhotos();
     await loadCmsData();
-    showToast("Status photo dikemaskini.");
+    showToast("Photo status updated.");
   } catch (error) {
     showToast(error.message);
   }
@@ -1507,7 +1511,7 @@ myListingList.addEventListener("click", async (event) => {
     });
     await loadPhotos();
     await loadCmsData();
-    showToast("Harga listing dikemaskini.");
+    showToast("Listing price updated.");
   } catch (error) {
     showToast(error.message);
   }
@@ -1518,7 +1522,7 @@ assetLibraryList?.addEventListener("click", async (event) => {
   if (!button) return;
   if (!currentUser) {
     showPage("login");
-    scanNote.textContent = "Register atau login diperlukan untuk claim royalti.";
+    scanNote.textContent = "Register or log in to claim royalty.";
     return;
   }
   button.disabled = true;
@@ -1527,7 +1531,7 @@ assetLibraryList?.addEventListener("click", async (event) => {
       method: "POST",
       body: JSON.stringify({ ledger_hash: button.dataset.claimRoyalty }),
     });
-    showToast(result.message || "Claim royalti direkod.");
+    showToast(result.message || "Royalty claim recorded.");
   } catch (error) {
     showToast(error.message);
   } finally {
@@ -1545,7 +1549,7 @@ portalUserList.addEventListener("click", async (event) => {
       body: JSON.stringify(payload),
     });
     await loadCmsData();
-    showToast("User dikemaskini.");
+    showToast("User updated.");
   } catch (error) {
     showToast(error.message);
   }
@@ -1566,7 +1570,7 @@ portalSlideList.addEventListener("click", async (event) => {
       body: JSON.stringify({ status: statusButton.dataset.slideStatus }),
     });
     await loadSlides();
-    showToast("Slider dikemaskini.");
+    showToast("Slider updated.");
   } catch (error) {
     showToast(error.message);
   }
@@ -1588,7 +1592,7 @@ cartCheckoutButton.addEventListener("click", () => {
   const subtotal = cartItems.reduce((total, item) => total + Number(item.priceMyr || item.price * ethToMyr || 0), 0);
   selectedCheckoutItem = {
     id: cartItems[0].id,
-    title: `Photora cart (${cartItems.length} foto)`,
+    title: `Photora cart (${cartItems.length} photos)`,
     price: subtotal / ethToMyr,
     amountMyr: subtotal,
     items: [...cartItems],
@@ -1596,14 +1600,14 @@ cartCheckoutButton.addEventListener("click", () => {
   checkoutTitle.textContent = selectedCheckoutItem.title;
   checkoutEth.textContent = formatPrice(selectedCheckoutItem.price);
   checkoutMyr.textContent = formatMyr(subtotal);
-  checkoutNote.textContent = `Semak ${cartItems.length} foto sebelum bayar. Platform split ${feeSettings.platformFee}% direkod untuk payout creator.`;
+  checkoutNote.textContent = `Review ${cartItems.length} photos before payment. The ${feeSettings.platformFee}% platform split is recorded for creator payout.`;
   try {
     showPage("checkout");
     forcePage("checkout");
     cartNote.textContent = "Order cart dipindahkan ke checkout.";
     if (location.hash !== "#checkout") location.hash = "checkout";
   } catch (error) {
-    cartNote.textContent = `Checkout page gagal dibuka: ${error.message}`;
+    cartNote.textContent = `Checkout page failed to open: ${error.message}`;
   }
   renderCheckoutItems(selectedCheckoutItem.items);
   setCheckoutReceiptLinks(null);
@@ -1616,7 +1620,7 @@ cartCheckoutButton.addEventListener("click", () => {
 createUserForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (currentUser?.role !== "super_admin") {
-    userManageNote.textContent = "Login sebagai super admin untuk cipta admin/user.";
+    userManageNote.textContent = "Log in as super admin to create admins/users.";
     return;
   }
   const data = new FormData(createUserForm);
@@ -1631,7 +1635,7 @@ createUserForm.addEventListener("submit", async (event) => {
       }),
     });
     createUserForm.reset();
-    userManageNote.textContent = "User berjaya dicipta.";
+    userManageNote.textContent = "User created successfully.";
     await loadCmsData();
   } catch (error) {
     userManageNote.textContent = error.message;
@@ -1641,7 +1645,7 @@ createUserForm.addEventListener("submit", async (event) => {
 slideForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!canManagePlatform()) {
-    slideNote.textContent = "Login sebagai admin atau super admin untuk update slider.";
+    slideNote.textContent = "Log in as admin or super admin to update sliders.";
     return;
   }
   const data = new FormData(slideForm);
@@ -1651,7 +1655,7 @@ slideForm.addEventListener("submit", async (event) => {
       body: JSON.stringify(Object.fromEntries(data.entries())),
     });
     slideForm.reset();
-    slideNote.textContent = "Slider hadapan berjaya dipublish.";
+    slideNote.textContent = "Front slider published successfully.";
     await loadSlides();
   } catch (error) {
     slideNote.textContent = error.message;
@@ -1678,7 +1682,7 @@ categoryPills.forEach((button) => {
 mintForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!currentUser) {
-    formNote.textContent = "Login dahulu sebelum submit foto.";
+    formNote.textContent = "Please log in before submitting a photo.";
     showPage("login");
     return;
   }
@@ -1709,14 +1713,14 @@ mintForm.addEventListener("submit", async (event) => {
     mintForm.reset();
     formNote.textContent =
       created.status === "pending"
-        ? `${created.title} dihantar untuk approval admin.`
-        : `${created.title} berjaya disenaraikan.`;
+        ? `${created.title} has been sent for admin approval.`
+        : `${created.title} has been listed successfully.`;
     categoryFilter.value = "all";
     searchInput.value = "";
     updateMetrics();
     renderCards();
     renderCart();
-    showToast("Foto sudah dihantar ke sistem CMS.");
+    showToast("Photo has been submitted to the CMS.");
   } catch (error) {
     formNote.textContent = error.message;
   }
@@ -1729,14 +1733,14 @@ feeSettingsForm.addEventListener("submit", (event) => {
   feeSettings.listingFee = Number(data.get("listingFee"));
   feeSettings.secondaryShare = Number(data.get("secondaryShare"));
   updateMetrics();
-  settingsNote.textContent = "Fee settings dikemaskini untuk simulasi profit.";
+  settingsNote.textContent = "Fee settings updated for profit simulation.";
   showToast("CMS owner sudah update model keuntungan.");
 });
 
 payFiatButton.addEventListener("click", async () => {
   if (!selectedCheckoutItem) {
-    checkoutNote.textContent = "Pilih foto dari marketplace dahulu.";
-    showToast("Pilih foto sebelum bayar.");
+    checkoutNote.textContent = "Select a photo from the marketplace first.";
+    showToast("Select a photo before payment.");
     return;
   }
 
@@ -1773,7 +1777,7 @@ payFiatButton.addEventListener("click", async () => {
     const result = await response.json();
 
     if (!response.ok || !result.checkoutUrl) {
-      throw new Error(result.error || "ToyyibPay bill gagal dicipta.");
+      throw new Error(result.error || "ToyyibPay bill failed to create.");
     }
 
     transactions.unshift({
@@ -1802,13 +1806,13 @@ payFiatButton.addEventListener("click", async () => {
     }
     setCheckoutReceiptLinks(result);
     setCheckoutSuccess(lastCheckoutOrder);
-    checkoutNote.textContent = "Bill ToyyibPay berjaya. Jika halaman bayaran tidak terbuka, tekan pautan ToyyibPay di bawah.";
+    checkoutNote.textContent = "ToyyibPay bill created successfully. If the payment page does not open, use the ToyyibPay link below.";
     window.setTimeout(() => {
       window.location.assign(result.checkoutUrl);
     }, 1200);
   } catch (error) {
     checkoutNote.textContent = error.message;
-    showToast("ToyyibPay checkout gagal.");
+    showToast("ToyyibPay checkout failed.");
   } finally {
     payFiatButton.disabled = false;
   }
@@ -1821,14 +1825,14 @@ function setChatOpen(isOpen) {
 
 function getChatAnswer(question) {
   if (question.includes("MYR")) {
-    return "Ya. Pilih Pay MYR pada foto, pilih FPX/kad/e-wallet, kemudian original file dibuka selepas bayaran berjaya.";
+    return "Yes. Choose Pay MYR on a photo, select FPX/card/e-wallet, then the original file is unlocked after successful payment.";
   }
 
   if (question.includes("upload")) {
-    return "Creator perlu upload foto asli daripada DSLR atau mobile phone. Foto AI-generated dan manipulasi berat tidak diterima.";
+    return "Creators must upload original photos from DSLR or mobile phone cameras. AI-generated and heavily manipulated images are not accepted.";
   }
 
-  return "Preview dipaparkan dalam resolusi rendah dengan watermark. Fail original disimpan private dan dibuka melalui signed URL selepas pembelian.";
+  return "Previews are shown in low resolution with a watermark. Original files stay private and open through signed URLs after purchase.";
 }
 
 function appendChatMessage(text, type) {

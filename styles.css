@@ -256,6 +256,15 @@
   gap: 18px;
 }
 
+.scan-panel.app-scanner {
+  grid-template-columns: 190px minmax(220px, 1fr) minmax(210px, 0.85fr) minmax(210px, 0.85fr) auto;
+  gap: 14px;
+  align-items: center;
+  border-radius: 22px;
+  padding: 18px;
+  background: linear-gradient(135deg, #ffffff 0%, #f7f9ff 52%, #fff8ed 100%);
+}
+
 @media (max-width: 980px) {
   .portal-shell {
     grid-template-columns: 1fr;
@@ -1693,6 +1702,105 @@ body.cart-checkout-mode #checkout {
 .verify-info-card .tool-list span {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
+}
+
+.app-scanner {
+  grid-template-columns: 190px minmax(220px, 1fr) minmax(210px, 0.85fr) minmax(210px, 0.85fr) auto;
+  gap: 14px;
+  align-items: center;
+  background: linear-gradient(135deg, #ffffff 0%, #f7f9ff 52%, #fff8ed 100%);
+  border-radius: 22px;
+  padding: 18px;
+}
+
+.scanner-visual {
+  min-height: 220px;
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 70% 22%, rgba(246, 197, 67, 0.45), transparent 26%),
+    linear-gradient(145deg, #06135f 0%, #08117f 45%, #c6281d 100%);
+  color: #fff;
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 16px 34px rgba(6, 19, 95, 0.22);
+}
+
+.scanner-camera-dot {
+  position: absolute;
+  top: 12px;
+  width: 44px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.scanner-frame {
+  width: 104px;
+  height: 104px;
+  position: relative;
+}
+
+.scanner-frame span {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-color: #fff;
+}
+
+.scanner-frame span:nth-child(1) {
+  top: 0;
+  left: 0;
+  border-top: 4px solid;
+  border-left: 4px solid;
+}
+
+.scanner-frame span:nth-child(2) {
+  top: 0;
+  right: 0;
+  border-top: 4px solid;
+  border-right: 4px solid;
+}
+
+.scanner-frame span:nth-child(3) {
+  bottom: 0;
+  left: 0;
+  border-bottom: 4px solid;
+  border-left: 4px solid;
+}
+
+.scanner-frame span:nth-child(4) {
+  right: 0;
+  bottom: 0;
+  border-right: 4px solid;
+  border-bottom: 4px solid;
+}
+
+.scanner-visual strong {
+  position: absolute;
+  top: 86px;
+  font-size: 2.2rem;
+  letter-spacing: 0;
+}
+
+.scanner-visual small {
+  align-self: end;
+  text-align: center;
+  max-width: 140px;
+  color: rgba(255, 255, 255, 0.76);
+  line-height: 1.35;
+}
+
+.app-scanner .scanner-copy h3 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.app-scanner .primary-action {
+  min-height: 48px;
+  white-space: nowrap;
 }
 
 .auth-code {
@@ -3935,7 +4043,12 @@ th {
 
   .portal-shell .dashboard-grid,
   .sales-strip,
-  .role-dashboard-grid {
+  .role-dashboard-grid,
+  .scan-panel.app-scanner {
     grid-template-columns: 1fr;
+  }
+
+  .scanner-visual {
+    min-height: 190px;
   }
 }
