@@ -2169,7 +2169,14 @@ th {
 }
 
 .account-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
   min-width: 108px;
+  width: max-content;
+  min-height: 42px;
+  padding: 0 22px;
   border-radius: 999px;
   background: #cc2f3f;
   box-shadow: 0 10px 28px rgba(204, 47, 63, 0.18);
@@ -2906,6 +2913,9 @@ th {
 
   .account-button {
     min-width: 78px;
+    width: max-content;
+    min-height: 38px;
+    padding: 0 16px;
   }
 
   .hero {
