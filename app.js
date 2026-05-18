@@ -199,6 +199,7 @@ const portalUserList = document.querySelector("#portalUserList");
 const portalOrderList = document.querySelector("#portalOrderList");
 const portalSlideList = document.querySelector("#portalSlideList");
 const myListingList = document.querySelector("#myListingList");
+const assetLibraryList = document.querySelector("#assetLibraryList");
 const createUserForm = document.querySelector("#createUserForm");
 const userManageNote = document.querySelector("#userManageNote");
 const slideForm = document.querySelector("#slideForm");
@@ -258,9 +259,25 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
+function qrImageUrlFor(value) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(value)}`;
+}
+
+async function detectQrFromImage(file) {
+  if (!file || !("BarcodeDetector" in window)) return "";
+  try {
+    const detector = new BarcodeDetector({ formats: ["qr_code"] });
+    const bitmap = await createImageBitmap(file);
+    const codes = await detector.detect(bitmap);
+    return codes[0]?.rawValue || "";
+  } catch {
+    return "";
+  }
+}
+
 function setCheckoutReceiptLinks(receipts) {
   if (!checkoutReceiptLinks) return;
-  if (!receipts?.buyerReceiptUrl && !receipts?.sellerReceiptUrl && !receipts?.checkoutUrl) {
+  if (!receipts?.buyerReceiptUrl && !receipts?.sellerReceiptUrl && !receipts?.checkoutUrl && !receipts?.certificateUrl) {
     checkoutReceiptLinks.hidden = true;
     checkoutReceiptLinks.innerHTML = "";
     return;
@@ -271,6 +288,7 @@ function setCheckoutReceiptLinks(receipts) {
     ${receipts.checkoutUrl ? `<a href="${escapeHtml(receipts.checkoutUrl)}" target="_blank" rel="noopener">Buka halaman bayaran ToyyibPay</a>` : ""}
     ${receipts.buyerReceiptUrl ? `<a href="${escapeHtml(receipts.buyerReceiptUrl)}" target="_blank" rel="noopener">Resit pembelian</a>` : ""}
     ${receipts.sellerReceiptUrl ? `<a href="${escapeHtml(receipts.sellerReceiptUrl)}" target="_blank" rel="noopener">Resit jualan creator</a>` : ""}
+    ${receipts.certificateUrl ? `<a href="${escapeHtml(receipts.certificateUrl)}" target="_blank" rel="noopener">Sijil pemilikan</a>` : ""}
   `;
 }
 
@@ -671,6 +689,33 @@ function renderMyListings(photos = []) {
     : '<p class="empty-state">Belum ada listing milik akaun ini.</p>';
 }
 
+function renderAssetLibrary(library = { bought: [], sold: [] }) {
+  if (!assetLibraryList) return;
+  const records = [...(library.bought || []), ...(library.sold || [])];
+  assetLibraryList.innerHTML = records.length
+    ? records
+        .map((record) => {
+          const certificateUrl = record.authenticity_code ? `/api/certificate/${encodeURIComponent(record.authenticity_code)}` : "";
+          const absoluteCertificate = certificateUrl ? `${location.origin}${certificateUrl}` : "";
+          return `<article class="manager-row">
+            <img src="${escapeHtml(record.image_url || "assets/photoralogo.png")}" alt="" />
+            <div>
+              <strong>${escapeHtml(record.photo_title || record.order_ref || "Photora asset")}</strong>
+              <span>${record.type === "sold" ? "Dijual" : "Dibeli"} · ${escapeHtml(record.payment_status || "pending")} · ${formatMyr(Number(record.amount_myr || 0))}</span>
+              <small>Pemilik asal: ${escapeHtml(record.original_owner || "-")} · Pemilik baru: ${escapeHtml(record.new_owner || record.buyer_name || "-")}</small>
+              <small>Hash ledger: ${escapeHtml(record.ledger_hash || "-")}</small>
+            </div>
+            <div class="manager-actions">
+              ${certificateUrl ? `<a href="${escapeHtml(certificateUrl)}" target="_blank" rel="noopener">Sijil</a>` : ""}
+              ${absoluteCertificate ? `<a href="${escapeHtml(qrImageUrlFor(absoluteCertificate))}" target="_blank" rel="noopener">QR</a>` : ""}
+              <button type="button" data-claim-royalty="${escapeHtml(record.ledger_hash || record.authenticity_code || "")}">Claim royalti</button>
+            </div>
+          </article>`;
+        })
+        .join("")
+    : '<p class="empty-state">Belum ada asset dibeli atau dijual. Selepas checkout, library pemilikan akan dipaparkan di sini.</p>';
+}
+
 function renderUserManager(users = []) {
   if (!portalUserList) return;
   portalUserList.innerHTML = users.length
@@ -753,6 +798,7 @@ async function loadCmsData() {
   if (!currentUser) {
     renderPhotoManager([]);
     renderMyListings([]);
+    renderAssetLibrary();
     renderUserManager([]);
     renderOrderManager([]);
     renderSlideList(heroSlides);
@@ -766,6 +812,12 @@ async function loadCmsData() {
   } catch {
     renderPhotoManager([]);
     renderMyListings([]);
+  }
+  try {
+    const assets = await apiRequest("/api/me/assets");
+    renderAssetLibrary(assets.library || {});
+  } catch {
+    renderAssetLibrary();
   }
   if (canManagePlatform()) {
     try {
@@ -1367,13 +1419,22 @@ scanForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = new FormData(scanForm);
   const imageFile = data.get("scan_image");
+  let detectedQr = "";
+  if (imageFile && imageFile.size) {
+    scanNote.textContent = "Mencuba baca QR code daripada kamera/upload...";
+    detectedQr = await detectQrFromImage(imageFile);
+  }
   const uploadedImage = imageFile && imageFile.size ? await readFileAsDataUrl(imageFile) : "";
-  const query = data.get("query") || uploadedImage;
+  const query = data.get("query") || detectedQr || uploadedImage;
   if (!query) {
     scanNote.textContent = "Masukkan kod/URL atau upload gambar untuk scan.";
     return;
   }
-  scanNote.textContent = uploadedImage ? "AI-assisted scanner sedang analisis gambar..." : "Scanning authenticity code...";
+  scanNote.textContent = detectedQr
+    ? "QR code ditemui. Semakan sijil sedang dibuat..."
+    : uploadedImage
+      ? "AI-assisted scanner sedang analisis gambar..."
+      : "Scanning authenticity code...";
   try {
     const result = await apiRequest("/api/photos/verify", {
       method: "POST",
@@ -1442,6 +1503,28 @@ myListingList.addEventListener("click", async (event) => {
     showToast("Harga listing dikemaskini.");
   } catch (error) {
     showToast(error.message);
+  }
+});
+
+assetLibraryList?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-claim-royalty]");
+  if (!button) return;
+  if (!currentUser) {
+    showPage("login");
+    scanNote.textContent = "Register atau login diperlukan untuk claim royalti.";
+    return;
+  }
+  button.disabled = true;
+  try {
+    const result = await apiRequest("/api/royalty/claim", {
+      method: "POST",
+      body: JSON.stringify({ ledger_hash: button.dataset.claimRoyalty }),
+    });
+    showToast(result.message || "Claim royalti direkod.");
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    button.disabled = false;
   }
 });
 
@@ -1701,6 +1784,8 @@ payFiatButton.addEventListener("click", async () => {
       checkoutUrl: result.checkoutUrl,
       buyerReceiptUrl: result.buyerReceiptUrl,
       sellerReceiptUrl: result.sellerReceiptUrl,
+      certificateUrl: result.certificateUrl,
+      ledgerHash: result.ledgerHash,
     };
     localStorage.setItem("photoraLastCheckoutOrder", JSON.stringify(lastCheckoutOrder));
     if (selectedCheckoutItem.items?.length) {

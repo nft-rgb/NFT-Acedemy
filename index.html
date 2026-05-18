@@ -41,7 +41,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=4.19.0" />
+    <link rel="stylesheet" href="styles.css?v=4.20.0" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -998,20 +998,28 @@
             <div>
               <p class="eyebrow">AI-assisted photo authenticity</p>
               <h3>Camera scanner ketulenan foto</h3>
-              <p>Scan kod, URL atau upload/capture gambar. Jika asset berdaftar ditemui, sistem jana link sijil pemilikan Photora.</p>
+              <p>Scan kod, URL, QR certificate atau upload/capture gambar. Jika asset berdaftar ditemui, sistem jana link sijil pemilikan Photora.</p>
             </div>
             <label>
               Kod / image URL
               <input name="query" type="text" placeholder="PHOTORA-... atau URL gambar" />
             </label>
             <label>
-              Camera / upload image
+              Camera / upload image / QR code
               <input name="scan_image" type="file" accept="image/*" capture="environment" />
             </label>
-            <button class="primary-action" type="submit">Scan photo</button>
+            <button class="primary-action" type="submit">Scan photo / QR</button>
             <p class="form-note" id="scanNote" role="status"></p>
           </form>
           <div class="management-grid" id="dashboard-assets">
+            <section class="management-card dashboard-module" data-role-card="user">
+              <div class="table-heading">
+                <h3>Asset library</h3>
+                <span>Foto dibeli, dijual, sijil QR dan hash ledger</span>
+              </div>
+              <div class="management-list" id="assetLibraryList"></div>
+            </section>
+
             <section class="management-card dashboard-module" data-role-card="user">
               <div class="table-heading">
                 <h3>My listing & pricing</h3>
@@ -1283,6 +1291,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=4.19.0"></script>
+    <script src="app.js?v=4.20.0"></script>
   </body>
 </html>

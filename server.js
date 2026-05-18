@@ -172,7 +172,12 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
-function buildOwnershipCertificate(photo) {
+function buildOwnershipCertificate(photo, ownership = null) {
+  const certificateUrl = makeAppUrl(certificateUrlFor(photo));
+  const qrUrl = qrImageUrlFor(certificateUrl);
+  const originalOwner = ownership?.original_owner || photo.creator_name || "Photora Creator";
+  const currentOwner = ownership?.new_owner || ownership?.buyer_name || "Belum ditukar milik / marketplace owner";
+  const ledgerHash = ownership?.ledger_hash || makePerceptualHash(`${photo.authenticity_code || photo.id}|${originalOwner}|${currentOwner}`);
   return `<!doctype html>
 <html lang="ms">
   <head>
@@ -182,27 +187,38 @@ function buildOwnershipCertificate(photo) {
     <style>
       body{margin:0;font-family:Inter,Arial,sans-serif;background:#f4f6fa;color:#111827}
       main{max-width:860px;margin:40px auto;padding:28px;background:white;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 18px 50px rgba(15,23,42,.08)}
-      img{width:100%;max-height:420px;object-fit:cover;border-radius:14px}
+      img.asset{width:100%;max-height:420px;object-fit:cover;border-radius:14px}
       .seal{display:inline-flex;margin:0 0 18px;padding:8px 14px;border-radius:999px;background:#eef2ff;color:#5548ea;font-weight:900}
       h1{font-size:clamp(2rem,5vw,3.2rem);margin:0 0 12px}
       dl{display:grid;grid-template-columns:180px 1fr;gap:12px;margin-top:22px}
       dt{color:#64748b;font-weight:800}dd{margin:0;font-weight:800}
+      .cert-grid{display:grid;grid-template-columns:1fr 180px;gap:20px;align-items:start}
+      .qr{width:180px;border:1px solid #e5e7eb;border-radius:16px;padding:10px;background:#fff}
+      .hash{word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88rem}
+      .claim{display:inline-flex;margin-top:18px;padding:12px 18px;border-radius:999px;background:#c6281d;color:white;text-decoration:none;font-weight:900}
+      @media(max-width:720px){main{margin:12px;padding:18px}.cert-grid{grid-template-columns:1fr}.qr{width:150px}}
     </style>
   </head>
   <body>
     <main>
       <span class="seal">PHOTORA VERIFIED CERTIFICATE</span>
       <h1>Sijil Ketulenan & Pemilikan Foto</h1>
-      <p>Asset ini ditemui dalam rekod Photora dan mempunyai kod pengesahan berdaftar.</p>
-      <img src="${escapeHtml(photo.image_url || "assets/photoralogo.png")}" alt="" />
+      <p>Asset ini ditemui dalam rekod Photora dan mempunyai kod pengesahan berdaftar. QR ini boleh discan semula untuk melihat sijil pemilikan.</p>
+      <div class="cert-grid">
+        <img class="asset" src="${escapeHtml(photo.image_url || "assets/photoralogo.png")}" alt="" />
+        <img class="qr" src="${escapeHtml(qrUrl)}" alt="QR certificate" />
+      </div>
       <dl>
         <dt>Title</dt><dd>${escapeHtml(photo.title)}</dd>
-        <dt>Creator</dt><dd>${escapeHtml(photo.creator_name || "Photora Creator")}</dd>
+        <dt>Pemilik Asal</dt><dd>${escapeHtml(originalOwner)}</dd>
+        <dt>Pemilik Baru</dt><dd>${escapeHtml(currentOwner)}</dd>
         <dt>Category</dt><dd>${escapeHtml(photo.category || "-")}</dd>
         <dt>Authenticity Code</dt><dd>${escapeHtml(photo.authenticity_code || "-")}</dd>
+        <dt>Ledger Hash</dt><dd class="hash">${escapeHtml(ledgerHash)}</dd>
         <dt>Status</dt><dd>${escapeHtml(photo.status || "registered")}</dd>
         <dt>Verified At</dt><dd>${new Date().toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })}</dd>
       </dl>
+      <a class="claim" href="/#login">Register / login untuk claim royalti</a>
     </main>
   </body>
 </html>`;
@@ -461,6 +477,40 @@ function makePerceptualHash(value) {
   return crypto.createHash("sha256").update(String(value || "")).digest("hex");
 }
 
+function makeLedgerHash(input) {
+  return crypto
+    .createHash("sha256")
+    .update(
+      [
+        input.order_ref,
+        input.photo_id,
+        input.buyer_id,
+        input.buyer_email,
+        input.original_owner,
+        input.new_owner,
+        input.amount_myr,
+        input.created_at || new Date().toISOString(),
+      ].join("|"),
+    )
+    .digest("hex");
+}
+
+function certificateUrlFor(photoOrCode) {
+  const code = typeof photoOrCode === "string" ? photoOrCode : photoOrCode?.authenticity_code || photoOrCode?.id || "";
+  return `/api/certificate/${encodeURIComponent(code)}`;
+}
+
+function qrImageUrlFor(targetUrl) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(targetUrl)}`;
+}
+
+function extractVerificationNeedle(query) {
+  const raw = String(query || "").trim();
+  const certificateMatch = raw.match(/\/api\/certificate\/([^?#]+)/);
+  if (certificateMatch) return decodeURIComponent(certificateMatch[1]);
+  return raw;
+}
+
 function makeSlug(value) {
   const base = String(value || "photora-news")
     .toLowerCase()
@@ -535,6 +585,14 @@ function loadLocalData() {
     data.counters.slides ||= data.slides.length;
     data.counters.tokens ||= data.auth_tokens?.length || 0;
     data.auth_tokens ||= [];
+    data.orders ||= [];
+    data.orders.forEach((order) => {
+      order.original_owner ||= order.creator_name || "Photora Creator";
+      order.new_owner ||= order.buyer_name || order.buyer_email || "Photora Buyer";
+      order.certificate_code ||= order.order_ref;
+      order.ledger_hash ||= makeLedgerHash(order);
+      order.items_json ||= order.items_json || "[]";
+    });
     data.users.forEach((user) => {
       if (user.email_verified === undefined) user.email_verified = user.role === "admin" || user.role === "super_admin";
     });
@@ -761,7 +819,7 @@ function createLocalStore() {
       return data.photos.find((photo) => photo.id === Number(id)) || null;
     },
     async verifyPhoto(query) {
-      const needle = String(query || "").trim().toLowerCase();
+      const needle = extractVerificationNeedle(query).toLowerCase();
       return (
         data.photos.find((photo) => String(photo.authenticity_code || "").toLowerCase() === needle) ||
         data.photos.find((photo) => String(photo.image_url || "").toLowerCase() === needle) ||
@@ -769,6 +827,8 @@ function createLocalStore() {
       );
     },
     async createOrder(input) {
+      const photo = data.photos.find((item) => Number(item.id) === Number(input.photo_id));
+      const buyer = input.buyer_name || input.buyer_email || "Photora Buyer";
       const order = {
         id: ++data.counters.orders,
         order_ref: input.order_ref,
@@ -786,8 +846,13 @@ function createLocalStore() {
         buyer_name: input.buyer_name || null,
         buyer_email: input.buyer_email || null,
         buyer_phone: input.buyer_phone || null,
+        original_owner: photo?.creator_name || input.original_owner || "Photora Creator",
+        new_owner: input.new_owner || buyer,
+        certificate_code: photo?.authenticity_code || input.order_ref,
+        items_json: JSON.stringify(input.items || []),
         created_at: new Date().toISOString(),
       };
+      order.ledger_hash = makeLedgerHash(order);
       data.orders.unshift(order);
       saveLocalData(data);
       return order;
@@ -809,12 +874,43 @@ function createLocalStore() {
         ...order,
         photo_title: photo?.title || null,
         creator_name: photo?.creator_name || null,
+        authenticity_code: photo?.authenticity_code || null,
+        image_url: photo?.image_url || null,
+        category: photo?.category || null,
         buyer_name: buyer?.name || order.buyer_name || null,
         buyer_email: buyer?.email || order.buyer_email || null,
       };
     },
     async listOrders() {
       return data.orders;
+    },
+    async getLatestOwnershipByPhoto(photoId) {
+      const order = data.orders.find((item) => Number(item.photo_id) === Number(photoId) && ["paid", "pending"].includes(item.payment_status));
+      if (!order) return null;
+      const buyer = data.users.find((item) => Number(item.id) === Number(order.buyer_id));
+      return {
+        ...order,
+        buyer_name: buyer?.name || order.buyer_name || order.new_owner,
+        buyer_email: buyer?.email || order.buyer_email,
+      };
+    },
+    async listAssetLibrary(user) {
+      const bought = data.orders
+        .filter((order) => Number(order.buyer_id) === Number(user.id) || String(order.buyer_email || "").toLowerCase() === String(user.email || "").toLowerCase())
+        .map((order) => {
+          const photo = data.photos.find((item) => Number(item.id) === Number(order.photo_id)) || {};
+          return { ...order, type: "bought", photo_title: photo.title, image_url: photo.image_url, authenticity_code: photo.authenticity_code, category: photo.category };
+        });
+      const sold = data.orders
+        .filter((order) => {
+          const photo = data.photos.find((item) => Number(item.id) === Number(order.photo_id));
+          return Number(photo?.creator_id) === Number(user.id);
+        })
+        .map((order) => {
+          const photo = data.photos.find((item) => Number(item.id) === Number(order.photo_id)) || {};
+          return { ...order, type: "sold", photo_title: photo.title, image_url: photo.image_url, authenticity_code: photo.authenticity_code, category: photo.category };
+        });
+      return { bought, sold };
     },
     async getSalesSummary(user) {
       const orders = data.orders.filter((order) => user.role === "super_admin" || user.role === "admin" || Number(order.buyer_id) === Number(user.id));
@@ -953,6 +1049,11 @@ async function ensureUserColumns(pool) {
     ["buyer_name", "VARCHAR(160) NULL"],
     ["buyer_email", "VARCHAR(190) NULL"],
     ["buyer_phone", "VARCHAR(40) NULL"],
+    ["original_owner", "VARCHAR(190) NULL"],
+    ["new_owner", "VARCHAR(190) NULL"],
+    ["certificate_code", "VARCHAR(120) NULL"],
+    ["ledger_hash", "VARCHAR(128) NULL"],
+    ["items_json", "MEDIUMTEXT NULL"],
   ];
   for (const [column, definition] of orderColumns) {
     try {
@@ -979,6 +1080,11 @@ async function ensureUserColumns(pool) {
     await pool.query("CREATE INDEX idx_news_category ON news_posts(category)");
   } catch (error) {
     if (error.code !== "ER_DUP_KEYNAME") throw error;
+  }
+  try {
+    await pool.query("ALTER TABLE transactions ADD COLUMN blockchain_hash VARCHAR(128) NULL");
+  } catch (error) {
+    if (error.code !== "ER_DUP_FIELDNAME") throw error;
   }
 }
 
@@ -1213,15 +1319,20 @@ function createMysqlStore(pool) {
       return rows[0] || null;
     },
     async verifyPhoto(query) {
+      const needle = extractVerificationNeedle(query);
       const [rows] = await pool.execute(
         "SELECT * FROM photos WHERE authenticity_code = ? OR image_url = ? OR perceptual_hash = ? LIMIT 1",
-        [query, query, makePerceptualHash(query)],
+        [needle, needle, makePerceptualHash(needle)],
       );
       return rows[0] || null;
     },
     async createOrder(input) {
+      const photo = input.photo_id ? await this.getPhotoById(input.photo_id) : null;
+      const originalOwner = photo?.creator_name || input.original_owner || "Photora Creator";
+      const newOwner = input.new_owner || input.buyer_name || input.buyer_email || "Photora Buyer";
+      const ledgerHash = makeLedgerHash({ ...input, original_owner: originalOwner, new_owner: newOwner });
       await pool.execute(
-        "INSERT INTO orders (order_ref, buyer_id, photo_id, amount_myr, amount_eth, platform_fee_myr, creator_payout_myr, payment_provider, payment_status, bill_code, buyer_name, buyer_email, buyer_phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO orders (order_ref, buyer_id, photo_id, amount_myr, amount_eth, platform_fee_myr, creator_payout_myr, payment_provider, payment_status, bill_code, buyer_name, buyer_email, buyer_phone, original_owner, new_owner, certificate_code, ledger_hash, items_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           input.order_ref,
           input.buyer_id || null,
@@ -1237,9 +1348,14 @@ function createMysqlStore(pool) {
           input.buyer_name || null,
           input.buyer_email || null,
           input.buyer_phone || null,
+          originalOwner,
+          newOwner,
+          photo?.authenticity_code || input.order_ref,
+          ledgerHash,
+          JSON.stringify(input.items || []),
         ],
       );
-      return input;
+      return { ...input, original_owner: originalOwner, new_owner: newOwner, certificate_code: photo?.authenticity_code || input.order_ref, ledger_hash: ledgerHash };
     },
     async updateOrderStatus(orderRef, status, billCode) {
       await pool.execute("UPDATE orders SET payment_status = ?, bill_code = COALESCE(?, bill_code) WHERE order_ref = ?", [
@@ -1250,16 +1366,34 @@ function createMysqlStore(pool) {
     },
     async getOrderByRef(orderRef) {
       const [rows] = await pool.execute(
-        "SELECT orders.*, photos.title AS photo_title, photos.creator_name, COALESCE(users.name, orders.buyer_name) AS buyer_name, COALESCE(users.email, orders.buyer_email) AS buyer_email FROM orders LEFT JOIN photos ON photos.id = orders.photo_id LEFT JOIN users ON users.id = orders.buyer_id WHERE orders.order_ref = ? LIMIT 1",
+        "SELECT orders.*, photos.title AS photo_title, photos.image_url, photos.category, photos.authenticity_code, photos.creator_name, COALESCE(users.name, orders.buyer_name) AS buyer_name, COALESCE(users.email, orders.buyer_email) AS buyer_email FROM orders LEFT JOIN photos ON photos.id = orders.photo_id LEFT JOIN users ON users.id = orders.buyer_id WHERE orders.order_ref = ? LIMIT 1",
         [orderRef],
       );
       return rows[0] || null;
     },
     async listOrders() {
       const [rows] = await pool.execute(
-        "SELECT orders.*, photos.title AS photo_title, COALESCE(users.email, orders.buyer_email) AS buyer_email FROM orders LEFT JOIN photos ON photos.id = orders.photo_id LEFT JOIN users ON users.id = orders.buyer_id ORDER BY orders.id DESC",
+        "SELECT orders.*, photos.title AS photo_title, photos.image_url, photos.authenticity_code, COALESCE(users.email, orders.buyer_email) AS buyer_email FROM orders LEFT JOIN photos ON photos.id = orders.photo_id LEFT JOIN users ON users.id = orders.buyer_id ORDER BY orders.id DESC",
       );
       return rows;
+    },
+    async getLatestOwnershipByPhoto(photoId) {
+      const [rows] = await pool.execute(
+        "SELECT orders.*, COALESCE(users.name, orders.buyer_name) AS buyer_name, COALESCE(users.email, orders.buyer_email) AS buyer_email FROM orders LEFT JOIN users ON users.id = orders.buyer_id WHERE orders.photo_id = ? AND orders.payment_status IN ('paid','pending') ORDER BY orders.id DESC LIMIT 1",
+        [photoId],
+      );
+      return rows[0] || null;
+    },
+    async listAssetLibrary(user) {
+      const [bought] = await pool.execute(
+        "SELECT 'bought' AS type, orders.*, photos.title AS photo_title, photos.image_url, photos.category, photos.authenticity_code FROM orders LEFT JOIN photos ON photos.id = orders.photo_id WHERE orders.buyer_id = ? OR orders.buyer_email = ? ORDER BY orders.id DESC",
+        [user.id, user.email],
+      );
+      const [sold] = await pool.execute(
+        "SELECT 'sold' AS type, orders.*, photos.title AS photo_title, photos.image_url, photos.category, photos.authenticity_code FROM orders JOIN photos ON photos.id = orders.photo_id WHERE photos.creator_id = ? ORDER BY orders.id DESC",
+        [user.id],
+      );
+      return { bought, sold };
     },
     async getSalesSummary(user) {
       const where = user.role === "super_admin" || user.role === "admin" ? "" : "WHERE orders.buyer_id = ?";
@@ -1666,7 +1800,7 @@ async function handleApi(req, res, pathname) {
     sendJson(res, 200, {
       valid: Boolean(photo),
       aiAnalysis,
-      certificateUrl: photo ? `/api/certificate/${encodeURIComponent(photo.authenticity_code || photo.id)}` : "",
+      certificateUrl: photo ? certificateUrlFor(photo) : "",
       photo: photo
         ? {
             id: photo.id,
@@ -1689,8 +1823,34 @@ async function handleApi(req, res, pathname) {
       res.end("<h1>Sijil tidak ditemui</h1><p>Asset ini tidak dijumpai dalam rekod Photora.</p>");
       return true;
     }
+    const ownership = await db.getLatestOwnershipByPhoto(photo.id);
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
-    res.end(buildOwnershipCertificate(photo));
+    res.end(buildOwnershipCertificate(photo, ownership));
+    return true;
+  }
+
+  if (req.method === "GET" && pathname === "/api/me/assets") {
+    const user = await currentUser(req);
+    if (!user) {
+      sendJson(res, 401, { error: "Login required." });
+      return true;
+    }
+    sendJson(res, 200, { library: await db.listAssetLibrary(user) });
+    return true;
+  }
+
+  if (req.method === "POST" && pathname === "/api/royalty/claim") {
+    const user = await currentUser(req);
+    if (!user) {
+      sendJson(res, 401, { error: "Register atau login diperlukan untuk claim royalti." });
+      return true;
+    }
+    const payload = await readJson(req);
+    sendJson(res, 200, {
+      ok: true,
+      message: "Claim royalti direkod. Admin Photora akan semak pemilikan dan wallet payout.",
+      hash: makeLedgerHash({ order_ref: payload.ledger_hash || payload.authenticity_code || "ROYALTY", buyer_id: user.id, buyer_email: user.email }),
+    });
     return true;
   }
 
@@ -1970,7 +2130,7 @@ async function handleCreateBill(req, res) {
     return;
   }
 
-  await db.createOrder({
+  const order = await db.createOrder({
     order_ref: orderId,
     buyer_id: user?.id,
     photo_id: payload.photoId || null,
@@ -1983,11 +2143,14 @@ async function handleCreateBill(req, res) {
     buyer_name: payload.customerName || user?.name || "Photora Buyer",
     buyer_email: payload.customerEmail || user?.email || "buyer@example.com",
     buyer_phone: payload.customerPhone || "0100000000",
+    items: payload.items || [],
   });
 
   sendJson(res, 200, {
     billCode,
     orderId,
+    ledgerHash: order.ledger_hash,
+    certificateUrl: order.certificate_code ? certificateUrlFor(order.certificate_code) : "",
     checkoutUrl: `${config.baseUrl}/${billCode}`,
     buyerReceiptUrl: `/api/orders/${encodeURIComponent(orderId)}/receipt.pdf?type=buyer`,
     sellerReceiptUrl: `/api/orders/${encodeURIComponent(orderId)}/receipt.pdf?type=seller`,
