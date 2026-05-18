@@ -52,6 +52,9 @@ CREATE TABLE IF NOT EXISTS orders (
   payment_provider VARCHAR(40) NOT NULL DEFAULT 'ToyyibPay',
   payment_status ENUM('pending', 'paid', 'failed', 'refunded') NOT NULL DEFAULT 'pending',
   bill_code VARCHAR(80) NULL,
+  buyer_name VARCHAR(160) NULL,
+  buyer_email VARCHAR(190) NULL,
+  buyer_phone VARCHAR(40) NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE SET NULL,
   FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE SET NULL

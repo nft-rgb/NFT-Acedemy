@@ -803,7 +803,8 @@ h2 {
   font-weight: 700;
 }
 
-.checkout-card select {
+.checkout-card select,
+.checkout-card input {
   min-height: 46px;
   width: 100%;
   padding: 0 13px;
@@ -811,6 +812,25 @@ h2 {
   border-radius: 8px;
   background: var(--surface);
   color: var(--text);
+}
+
+.checkout-buyer-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.receipt-links {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(12, 19, 43, 0.04);
+}
+
+.receipt-links a {
+  color: var(--blue-strong);
+  font-weight: 900;
 }
 
 .mint-panel {
@@ -2950,7 +2970,8 @@ th {
   justify-content: end;
 }
 
-.manager-actions button {
+.manager-actions button,
+.manager-actions a {
   min-height: 34px;
   padding: 0 10px;
   border: 1px solid #dbe3ef;
@@ -2960,6 +2981,9 @@ th {
   cursor: pointer;
   font-size: 0.78rem;
   font-weight: 850;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
 }
 
 .inline-admin-form,

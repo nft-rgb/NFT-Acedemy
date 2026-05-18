@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=4.3.0" />
+    <link rel="stylesheet" href="styles.css?v=4.4.0" />
   </head>
   <body>
     <header class="topbar">
@@ -233,16 +233,16 @@
       <section class="section checkout-section page-section" id="checkout" data-page="checkout">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Fiat checkout</p>
-            <h2>Beli tanpa crypto</h2>
+            <p class="eyebrow">Cash MYR checkout</p>
+            <h2>Beli foto guna ToyyibPay</h2>
           </div>
         </div>
         <div class="checkout-layout">
           <div class="checkout-copy">
             <p>
-              Pengguna yang belum ada crypto boleh bayar dengan wang biasa melalui payment gateway.
-              Selepas bayaran berjaya, platform boleh mint NFT ke custodial wallet pengguna atau
-              simpan pembelian sebagai lesen digital sehingga pengguna sambung wallet sendiri.
+              Pengguna yang belum ada crypto boleh bayar dalam MYR melalui ToyyibPay. Selepas bill
+              berjaya dicipta, pembeli akan dibawa ke halaman bayaran dan sistem akan sediakan resit
+              PDF untuk pembelian serta rekod jualan creator.
             </p>
             <div class="payment-methods" aria-label="Kaedah bayaran fiat">
               <span>ToyyibPay Sandbox</span>
@@ -271,8 +271,23 @@
                 <option value="E-wallet">E-wallet</option>
               </select>
             </label>
+            <div class="checkout-buyer-grid">
+              <label>
+                Nama pembeli
+                <input id="checkoutBuyerName" type="text" placeholder="Nama penuh" />
+              </label>
+              <label>
+                Email resit
+                <input id="checkoutBuyerEmail" type="email" placeholder="email@domain.com" />
+              </label>
+              <label>
+                No. telefon
+                <input id="checkoutBuyerPhone" type="tel" placeholder="0100000000" />
+              </label>
+            </div>
             <button class="primary-action full" id="payFiatButton" type="button">Pay with MYR</button>
             <p class="form-note" id="checkoutNote" role="status"></p>
+            <div class="receipt-links" id="checkoutReceiptLinks" hidden></div>
           </aside>
         </div>
       </section>
@@ -1199,6 +1214,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=4.3.0"></script>
+    <script src="app.js?v=4.4.0"></script>
   </body>
 </html>

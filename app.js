@@ -138,6 +138,10 @@ const checkoutMyr = document.querySelector("#checkoutMyr");
 const checkoutNote = document.querySelector("#checkoutNote");
 const paymentMethod = document.querySelector("#paymentMethod");
 const payFiatButton = document.querySelector("#payFiatButton");
+const checkoutBuyerName = document.querySelector("#checkoutBuyerName");
+const checkoutBuyerEmail = document.querySelector("#checkoutBuyerEmail");
+const checkoutBuyerPhone = document.querySelector("#checkoutBuyerPhone");
+const checkoutReceiptLinks = document.querySelector("#checkoutReceiptLinks");
 const chatToggle = document.querySelector("#chatToggle");
 const chatPanel = document.querySelector("#chatPanel");
 const chatClose = document.querySelector("#chatClose");
@@ -245,6 +249,21 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function setCheckoutReceiptLinks(receipts) {
+  if (!checkoutReceiptLinks) return;
+  if (!receipts?.buyerReceiptUrl && !receipts?.sellerReceiptUrl) {
+    checkoutReceiptLinks.hidden = true;
+    checkoutReceiptLinks.innerHTML = "";
+    return;
+  }
+  checkoutReceiptLinks.hidden = false;
+  checkoutReceiptLinks.innerHTML = `
+    <strong>Resit PDF auto</strong>
+    ${receipts.buyerReceiptUrl ? `<a href="${escapeHtml(receipts.buyerReceiptUrl)}" target="_blank" rel="noopener">Resit pembelian</a>` : ""}
+    ${receipts.sellerReceiptUrl ? `<a href="${escapeHtml(receipts.sellerReceiptUrl)}" target="_blank" rel="noopener">Resit jualan creator</a>` : ""}
+  `;
 }
 
 function readFileAsDataUrl(file) {
@@ -556,6 +575,10 @@ function renderOrderManager(orders = []) {
         .map(
           (order) => `<article class="manager-row compact">
             <div><strong>${escapeHtml(order.photo_title || order.order_ref)}</strong><span>${escapeHtml(order.payment_provider)} · ${escapeHtml(order.payment_status)} · RM ${Number(order.amount_myr || 0).toFixed(2)}</span></div>
+            <div class="manager-actions">
+              <a href="/api/orders/${encodeURIComponent(order.order_ref)}/receipt.pdf?type=buyer" target="_blank" rel="noopener">Buyer PDF</a>
+              <a href="/api/orders/${encodeURIComponent(order.order_ref)}/receipt.pdf?type=seller" target="_blank" rel="noopener">Seller PDF</a>
+            </div>
             <small>${escapeHtml(order.buyer_email || "Guest buyer")}</small>
           </article>`,
         )
@@ -703,7 +726,11 @@ function selectCheckoutItem(item) {
   checkoutTitle.textContent = item.title;
   checkoutEth.textContent = formatPrice(item.price);
   checkoutMyr.textContent = formatMyr(item.price * ethToMyr);
-  checkoutNote.textContent = "Sedia untuk checkout menggunakan wang biasa.";
+  checkoutNote.textContent = "Sedia untuk checkout cash MYR menggunakan ToyyibPay.";
+  setCheckoutReceiptLinks(null);
+  if (checkoutBuyerName) checkoutBuyerName.value = currentUser?.name || "";
+  if (checkoutBuyerEmail) checkoutBuyerEmail.value = currentUser?.email || "";
+  if (checkoutBuyerPhone) checkoutBuyerPhone.value = currentUser?.phone || currentUser?.mobile_phone || "";
   showPage("checkout");
 }
 
@@ -1289,6 +1316,10 @@ cartCheckoutButton.addEventListener("click", () => {
   checkoutEth.textContent = formatPrice(selectedCheckoutItem.price);
   checkoutMyr.textContent = formatMyr(subtotal);
   checkoutNote.textContent = `Termasuk split platform ${feeSettings.platformFee}% dan payout creator.`;
+  setCheckoutReceiptLinks(null);
+  if (checkoutBuyerName) checkoutBuyerName.value = currentUser?.name || "";
+  if (checkoutBuyerEmail) checkoutBuyerEmail.value = currentUser?.email || "";
+  if (checkoutBuyerPhone) checkoutBuyerPhone.value = currentUser?.phone || currentUser?.mobile_phone || "";
   showPage("checkout");
 });
 
@@ -1421,8 +1452,12 @@ payFiatButton.addEventListener("click", async () => {
 
   const method = paymentMethod.value;
   const amountMyr = selectedCheckoutItem.price * ethToMyr;
+  const customerName = checkoutBuyerName?.value.trim() || currentUser?.name || "Photora Buyer";
+  const customerEmail = checkoutBuyerEmail?.value.trim() || currentUser?.email || "buyer@example.com";
+  const customerPhone = checkoutBuyerPhone?.value.trim() || currentUser?.phone || currentUser?.mobile_phone || "0100000000";
   payFiatButton.disabled = true;
   checkoutNote.textContent = "Mencipta bill ToyyibPay...";
+  setCheckoutReceiptLinks(null);
 
   try {
     const response = await fetch("/api/toyyibpay/create-bill", {
@@ -1433,9 +1468,9 @@ payFiatButton.addEventListener("click", async () => {
         amountCents: Math.round(amountMyr * 100),
         amountEth: selectedCheckoutItem.price,
         photoId: selectedCheckoutItem.id,
-        customerName: "Photora Buyer",
-        customerEmail: currentUser?.email || "buyer@example.com",
-        customerPhone: "0100000000",
+        customerName,
+        customerEmail,
+        customerPhone,
         paymentMethod: method,
       }),
     });
@@ -1453,8 +1488,11 @@ payFiatButton.addEventListener("click", async () => {
       type: "primary",
     });
     updateMetrics();
-    checkoutNote.textContent = "Redirect ke ToyyibPay sandbox...";
-    window.location.href = result.checkoutUrl;
+    setCheckoutReceiptLinks(result);
+    checkoutNote.textContent = "Bill ToyyibPay berjaya. Redirect ke halaman pembayaran...";
+    window.setTimeout(() => {
+      window.location.href = result.checkoutUrl;
+    }, 900);
   } catch (error) {
     checkoutNote.textContent = error.message;
     showToast("ToyyibPay checkout gagal.");

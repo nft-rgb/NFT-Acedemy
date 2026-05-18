@@ -144,6 +144,78 @@ function sendJson(res, statusCode, payload, extraHeaders = {}) {
   res.end(JSON.stringify(payload));
 }
 
+function formatMoney(value) {
+  return `MYR ${Number(value || 0).toFixed(2)}`;
+}
+
+function escapePdfText(value) {
+  return String(value ?? "")
+    .replace(/[^\x20-\x7E]/g, "")
+    .replace(/\\/g, "\\\\")
+    .replace(/\(/g, "\\(")
+    .replace(/\)/g, "\\)");
+}
+
+function buildReceiptPdf(order, type = "buyer") {
+  const receiptType = type === "seller" ? "Resit Jualan Creator" : "Resit Pembelian";
+  const receiptNo = `${type === "seller" ? "SALE" : "BUY"}-${order.order_ref}`;
+  const gross = Number(order.amount_myr || 0);
+  const platformFee = Number(order.platform_fee_myr || 0);
+  const creatorPayout = Number(order.creator_payout_myr || Math.max(gross - platformFee, 0));
+  const lines = [
+    "P  PHOTORA NFT MARKETPLACE",
+    "Malaysia Trusted Photography & NFT Creative Ecosystem",
+    "",
+    receiptType,
+    `Receipt No: ${receiptNo}`,
+    `Order Ref: ${order.order_ref || "-"}`,
+    `Bill Code: ${order.bill_code || "-"}`,
+    `Payment Status: ${order.payment_status || "pending"}`,
+    `Payment Provider: ${order.payment_provider || "ToyyibPay"}`,
+    "",
+    `Photo: ${order.photo_title || "Photora digital photo"}`,
+    `Buyer: ${order.buyer_name || order.buyer_email || "Guest buyer"}`,
+    `Seller: ${order.creator_name || "Photora Creator"}`,
+    "",
+    `Gross Amount: ${formatMoney(gross)}`,
+    `Platform Service Fee 6%: ${formatMoney(platformFee)}`,
+    `Creator Payout: ${formatMoney(creatorPayout)}`,
+    "",
+    `Generated: ${new Date().toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })}`,
+    "This receipt is generated automatically by Photora after ToyyibPay bill creation or payment update.",
+  ];
+
+  const textCommands = lines
+    .map((line, index) => {
+      const y = 790 - index * 24;
+      const fontSize = index === 0 ? 20 : index === 3 ? 17 : 11;
+      return `BT /F1 ${fontSize} Tf 50 ${y} Td (${escapePdfText(line)}) Tj ET`;
+    })
+    .join("\n");
+  const stream = `${textCommands}\n`;
+  const objects = [];
+  const chunks = ["%PDF-1.4\n"];
+  const addObject = (content) => {
+    const offset = Buffer.byteLength(chunks.join(""), "binary");
+    objects.push(offset);
+    chunks.push(`${objects.length} 0 obj\n${content}\nendobj\n`);
+  };
+
+  addObject("<< /Type /Catalog /Pages 2 0 R >>");
+  addObject("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+  addObject("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>");
+  addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  addObject(`<< /Length ${Buffer.byteLength(stream, "binary")} >>\nstream\n${stream}endstream`);
+
+  const xrefOffset = Buffer.byteLength(chunks.join(""), "binary");
+  chunks.push(`xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`);
+  for (const offset of objects) {
+    chunks.push(`${String(offset).padStart(10, "0")} 00000 n \n`);
+  }
+  chunks.push(`trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`);
+  return Buffer.from(chunks.join(""), "binary");
+}
+
 function readJson(req) {
   return new Promise((resolve, reject) => {
     let body = "";
@@ -595,6 +667,9 @@ function createLocalStore() {
         payment_provider: input.payment_provider || "ToyyibPay",
         payment_status: input.payment_status || "pending",
         bill_code: input.bill_code || null,
+        buyer_name: input.buyer_name || null,
+        buyer_email: input.buyer_email || null,
+        buyer_phone: input.buyer_phone || null,
         created_at: new Date().toISOString(),
       };
       data.orders.unshift(order);
@@ -608,6 +683,19 @@ function createLocalStore() {
       if (billCode) order.bill_code = billCode;
       saveLocalData(data);
       return order;
+    },
+    async getOrderByRef(orderRef) {
+      const order = data.orders.find((item) => item.order_ref === orderRef);
+      if (!order) return null;
+      const photo = data.photos.find((item) => Number(item.id) === Number(order.photo_id));
+      const buyer = data.users.find((item) => Number(item.id) === Number(order.buyer_id));
+      return {
+        ...order,
+        photo_title: photo?.title || null,
+        creator_name: photo?.creator_name || null,
+        buyer_name: buyer?.name || order.buyer_name || null,
+        buyer_email: buyer?.email || order.buyer_email || null,
+      };
     },
     async listOrders() {
       return data.orders;
@@ -741,6 +829,9 @@ async function ensureUserColumns(pool) {
   const orderColumns = [
     ["platform_fee_myr", "DECIMAL(12,2) NOT NULL DEFAULT 0.00"],
     ["creator_payout_myr", "DECIMAL(12,2) NOT NULL DEFAULT 0.00"],
+    ["buyer_name", "VARCHAR(160) NULL"],
+    ["buyer_email", "VARCHAR(190) NULL"],
+    ["buyer_phone", "VARCHAR(40) NULL"],
   ];
   for (const [column, definition] of orderColumns) {
     try {
@@ -1009,7 +1100,7 @@ function createMysqlStore(pool) {
     },
     async createOrder(input) {
       await pool.execute(
-        "INSERT INTO orders (order_ref, buyer_id, photo_id, amount_myr, amount_eth, platform_fee_myr, creator_payout_myr, payment_provider, payment_status, bill_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO orders (order_ref, buyer_id, photo_id, amount_myr, amount_eth, platform_fee_myr, creator_payout_myr, payment_provider, payment_status, bill_code, buyer_name, buyer_email, buyer_phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           input.order_ref,
           input.buyer_id || null,
@@ -1022,6 +1113,9 @@ function createMysqlStore(pool) {
           input.payment_provider || "ToyyibPay",
           input.payment_status || "pending",
           input.bill_code || null,
+          input.buyer_name || null,
+          input.buyer_email || null,
+          input.buyer_phone || null,
         ],
       );
       return input;
@@ -1033,9 +1127,16 @@ function createMysqlStore(pool) {
         orderRef,
       ]);
     },
+    async getOrderByRef(orderRef) {
+      const [rows] = await pool.execute(
+        "SELECT orders.*, photos.title AS photo_title, photos.creator_name, COALESCE(users.name, orders.buyer_name) AS buyer_name, COALESCE(users.email, orders.buyer_email) AS buyer_email FROM orders LEFT JOIN photos ON photos.id = orders.photo_id LEFT JOIN users ON users.id = orders.buyer_id WHERE orders.order_ref = ? LIMIT 1",
+        [orderRef],
+      );
+      return rows[0] || null;
+    },
     async listOrders() {
       const [rows] = await pool.execute(
-        "SELECT orders.*, photos.title AS photo_title, users.email AS buyer_email FROM orders LEFT JOIN photos ON photos.id = orders.photo_id LEFT JOIN users ON users.id = orders.buyer_id ORDER BY orders.id DESC",
+        "SELECT orders.*, photos.title AS photo_title, COALESCE(users.email, orders.buyer_email) AS buyer_email FROM orders LEFT JOIN photos ON photos.id = orders.photo_id LEFT JOIN users ON users.id = orders.buyer_id ORDER BY orders.id DESC",
       );
       return rows;
     },
@@ -1202,7 +1303,9 @@ async function getCategoryCode() {
     catdescription: "Photora photo NFT payments",
   });
 
-  const categoryCode = Array.isArray(result) && result[0] && result[0].CategoryCode;
+  const categoryCode =
+    (Array.isArray(result) && result[0] && result[0].CategoryCode) ||
+    (result && typeof result === "object" && result.CategoryCode);
   if (!categoryCode) throw new Error("Unable to create ToyyibPay category.");
   config.categoryCode = categoryCode;
   return categoryCode;
@@ -1377,6 +1480,25 @@ async function handleApi(req, res, pathname) {
   const db = await getStore();
 
   if (await handleAuth(req, res, pathname)) return true;
+
+  const receiptMatch = pathname.match(/^\/api\/orders\/([^/]+)\/receipt\.pdf$/);
+  if (req.method === "GET" && receiptMatch) {
+    const requestUrl = new URL(req.url, config.appBaseUrl);
+    const order = await db.getOrderByRef(decodeURIComponent(receiptMatch[1]));
+    if (!order) {
+      sendJson(res, 404, { error: "Order not found." });
+      return true;
+    }
+    const type = requestUrl.searchParams.get("type") === "seller" ? "seller" : "buyer";
+    const pdf = buildReceiptPdf(order, type);
+    res.writeHead(200, {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `inline; filename="photora-${type}-receipt-${order.order_ref}.pdf"`,
+      "Cache-Control": "no-store",
+    });
+    res.end(pdf);
+    return true;
+  }
 
   if (req.method === "PATCH" && pathname === "/api/me/profile") {
     const user = await currentUser(req);
@@ -1717,12 +1839,17 @@ async function handleCreateBill(req, res) {
     creator_payout_myr: amountCents / 100 - (amountCents / 100) * (marketplaceDefaults.serviceFeePercent / 100),
     payment_status: "pending",
     bill_code: billCode,
+    buyer_name: payload.customerName || user?.name || "Photora Buyer",
+    buyer_email: payload.customerEmail || user?.email || "buyer@example.com",
+    buyer_phone: payload.customerPhone || "0100000000",
   });
 
   sendJson(res, 200, {
     billCode,
     orderId,
     checkoutUrl: `${config.baseUrl}/${billCode}`,
+    buyerReceiptUrl: `/api/orders/${encodeURIComponent(orderId)}/receipt.pdf?type=buyer`,
+    sellerReceiptUrl: `/api/orders/${encodeURIComponent(orderId)}/receipt.pdf?type=seller`,
   });
 }
 
