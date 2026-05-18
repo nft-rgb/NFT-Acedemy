@@ -823,10 +823,11 @@ authTabs.forEach((button) => {
   button.addEventListener("click", () => setAuthMode(button.dataset.authMode));
 });
 
-authForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
+async function submitAuthForm() {
   const data = new FormData(authForm);
   const endpoint = authMode === "register" ? "/api/auth/register" : "/api/auth/login";
+  authNote.textContent = authMode === "register" ? "Mendaftar akaun..." : "Sedang log masuk...";
+  authSubmit.disabled = true;
   try {
     const result = await apiRequest(endpoint, {
       method: "POST",
@@ -843,9 +844,22 @@ authForm.addEventListener("submit", async (event) => {
     await loadPhotos();
     await loadCmsData();
     showPage("dashboard");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (error) {
     authNote.textContent = error.message;
+  } finally {
+    authSubmit.disabled = false;
   }
+}
+
+authForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await submitAuthForm();
+});
+
+authSubmit.addEventListener("click", async (event) => {
+  event.preventDefault();
+  await submitAuthForm();
 });
 
 profileForm.addEventListener("submit", async (event) => {
