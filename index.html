@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=3.6.0" />
+    <link rel="stylesheet" href="styles.css?v=3.7.0" />
   </head>
   <body>
     <header class="topbar">
@@ -30,9 +30,10 @@
         Menu
       </button>
       <nav class="nav-links" id="primaryNav" aria-label="Navigasi utama">
-        <a class="active" href="#market" data-page="market"><span>Discover</span></a>
-        <a href="#checkout" data-page="checkout"><span>Pay</span></a>
-        <a href="#mint" data-page="mint"><span>Mint</span></a>
+        <a class="active" href="#market" data-page="market"><span>Utama</span></a>
+        <a href="#market"><span>Marketplace</span></a>
+        <a href="#mint" data-page="mint"><span>Mint Foto</span></a>
+        <a href="#dashboard" data-page="dashboard"><span>Semakan</span></a>
         <a href="#news" data-page="news"><span>News</span></a>
         <a href="#dashboard" data-page="dashboard"><span>Portal</span></a>
         <a class="secondary-nav" href="#protection" data-page="protection"><span>Protect</span></a>
@@ -50,35 +51,21 @@
     <main>
       <section class="hero page-section active" data-page="market">
         <div class="hero-copy">
-          <p class="eyebrow">Malaysia photo NFT marketplace</p>
-          <h1>Marketplace NFT untuk semua jenis foto asli.</h1>
+          <p class="hero-badge">Platform foto NFT rasmi</p>
+          <h1>Meraikan Foto Asli, Mengiktiraf Kreator.</h1>
           <p class="hero-text">
-            Platform untuk jurugambar DSLR dan mobilegraphy yang mahu jual foto sebenar
-            sebagai NFT. Foto janaan AI dan image manipulation tidak diterima.
+            Photora NFT Marketplace membantu jurugambar DSLR dan mobilegraphy menjual foto
+            sebenar sebagai aset digital yang boleh disahkan. Foto janaan AI dan manipulasi
+            berat tidak diterima.
           </p>
           <div class="hero-actions">
-            <a class="primary-action" href="#mint" data-page="mint">Mint foto</a>
-            <a class="secondary-action" href="#market" data-page="market">Discover</a>
+            <a class="primary-action" href="#market" data-page="market">Teroka Marketplace</a>
+            <a class="secondary-action glass-action" href="#mint" data-page="mint">Panduan Kreator</a>
           </div>
-        </div>
-        <div class="hero-showcase" aria-label="Koleksi NFT pilihan">
-          <article class="featured-nft">
-            <img
-              src="https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1100&q=80"
-              alt="Graduan di majlis konvokesyen"
-            />
-            <div class="featured-info">
-              <div>
-                <span class="muted">Featured drop</span>
-                <strong>Konvo Seri Gemilang #018</strong>
-              </div>
-              <span class="price-pill">0.42 ETH</span>
-            </div>
-          </article>
-          <div class="stats-strip" aria-label="Statistik marketplace">
-            <span><strong>12.8k</strong> Foto minted</span>
-            <span><strong>2.1k</strong> Kreator</span>
-            <span><strong>7.4 ETH</strong> Volume</span>
+          <div class="hero-dots" aria-hidden="true">
+            <span class="active"></span>
+            <span></span>
+            <span></span>
           </div>
         </div>
       </section>
@@ -640,39 +627,84 @@
         </div>
       </section>
 
-      <section class="section dashboard page-section" id="dashboard" data-page="dashboard">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Role portal</p>
-            <h2>Portal pengurusan Photora</h2>
-          </div>
-        </div>
-        <div class="dashboard-grid">
-          <article>
-            <span class="metric-label">Revenue</span>
-            <strong id="revenueMetric">3.82 ETH</strong>
-            <p>Anggaran hasil jualan kreator bulan ini.</p>
-          </article>
-          <article>
-            <span class="metric-label">Listed</span>
-            <strong id="listedMetric">8</strong>
-            <p>Foto NFT aktif dalam marketplace.</p>
-          </article>
-          <article>
-            <span class="metric-label">Royalty</span>
-            <strong>7.5%</strong>
-            <p>Kadar royalti default untuk jualan sekunder.</p>
-          </article>
-        </div>
-        <div class="role-dashboard">
-          <div class="role-panel-heading">
-            <div>
-              <p class="eyebrow">Account control</p>
-              <h3 id="roleDashboardTitle">Dashboard pengguna</h3>
+      <section class="dashboard page-section" id="dashboard" data-page="dashboard">
+        <div class="portal-shell">
+          <aside class="portal-sidebar" aria-label="Portal management">
+            <a class="portal-logo" href="#market" data-page="market">
+              <span class="brand-mark image-mark"><img src="assets/photoralogo.png" alt="" /></span>
+              <span>Photora</span>
+            </a>
+            <p class="sidebar-kicker">Portal Pengurusan</p>
+            <nav class="portal-menu" aria-label="Portal tools">
+              <a class="active" href="#dashboard" data-page="dashboard">Pengurusan Foto</a>
+              <a href="#dashboard" data-page="dashboard">Semakan Keaslian</a>
+              <a href="#checkout" data-page="checkout">Pembayaran</a>
+              <a href="#mint" data-page="mint">Asset Photo</a>
+              <a href="#news" data-page="news">Post News</a>
+              <a href="#security" data-page="security">Security</a>
+            </nav>
+            <div class="portal-account">
+              <span id="roleBadge">Guest</span>
+              <strong>Photora Admin</strong>
+              <small>hello@photora.my</small>
             </div>
-            <span id="roleBadge">Guest</span>
-          </div>
-          <div class="role-dashboard-grid">
+          </aside>
+
+          <div class="portal-main">
+            <header class="portal-topbar">
+              <label class="portal-search">
+                <span>Search</span>
+                <input type="search" placeholder="Cari foto, creator, order, user..." />
+              </label>
+              <div class="portal-actions">
+                <span>SSL Secure</span>
+                <span>LUNO Ready</span>
+              </div>
+            </header>
+
+            <div class="portal-heading">
+              <div>
+                <div class="breadcrumb-pills">
+                  <span>Portal</span>
+                  <span>Marketplace</span>
+                </div>
+                <h2 id="roleDashboardTitle">Dashboard pengguna</h2>
+                <p>Urus content, asset photo, user, wallet, news dan semakan keaslian dalam satu panel.</p>
+              </div>
+              <a class="primary-action" href="#news" data-page="news">Post News</a>
+            </div>
+
+            <div class="dashboard-grid">
+              <article>
+                <span class="metric-label">Revenue</span>
+                <strong id="revenueMetric">3.82 ETH</strong>
+                <p>Anggaran hasil jualan kreator bulan ini.</p>
+              </article>
+              <article>
+                <span class="metric-label">Listed</span>
+                <strong id="listedMetric">8</strong>
+                <p>Foto NFT aktif dalam marketplace.</p>
+              </article>
+              <article>
+                <span class="metric-label">Pending Review</span>
+                <strong>14</strong>
+                <p>Foto menunggu semakan admin.</p>
+              </article>
+              <article>
+                <span class="metric-label">Royalty</span>
+                <strong>7.5%</strong>
+                <p>Kadar royalti default untuk jualan sekunder.</p>
+              </article>
+            </div>
+
+            <div class="role-dashboard">
+              <div class="role-panel-heading">
+                <div>
+                  <p class="eyebrow">Account control</p>
+                  <h3>Panel user, admin dan super admin</h3>
+                </div>
+              </div>
+              <div class="role-dashboard-grid">
             <form class="settings-form" id="profileForm">
               <h3>Update profile</h3>
               <label>
@@ -719,7 +751,7 @@
           <div class="role-tools">
             <button type="button" data-page="mint">Asset photo</button>
             <button type="button" data-page="checkout">Wallet cash</button>
-            <button type="button" data-page="cms">CMS admin</button>
+            <button type="button" data-page="news">Post news</button>
             <button type="button" data-page="security">Security</button>
           </div>
           <div class="portal-workspace">
@@ -767,37 +799,63 @@
             <button class="primary-action" type="submit">Scan photo</button>
             <p class="form-note" id="scanNote" role="status"></p>
           </form>
+            </div>
+          </div>
         </div>
       </section>
 
       <section class="auth-page page-section" id="authModal" data-page="login" aria-label="Account login">
         <div class="auth-card">
           <button class="auth-close" id="authClose" type="button" aria-label="Close login">x</button>
-          <div>
-            <p class="eyebrow">Photora account</p>
-            <h2>Login / daftar akaun</h2>
-            <p>Pengguna boleh beli foto, creator boleh submit foto, admin boleh urus CMS.</p>
+          <div class="auth-visual">
+            <span class="brand-mark image-mark"><img src="assets/photoralogo.png" alt="" /></span>
+            <h2>Photora NFT Marketplace</h2>
+            <p>Real Photo Digital Ecosystem</p>
+            <div class="auth-info-box">
+              <h3>Selamat Datang</h3>
+              <p>Log masuk mengikut peranan akaun untuk mengurus pembelian, asset photo, wallet dan content platform.</p>
+              <ul>
+                <li>User boleh beli dan simpan asset photo.</li>
+                <li>Admin boleh review foto dan post news.</li>
+                <li>Super admin boleh urus user, fee dan keselamatan.</li>
+              </ul>
+            </div>
           </div>
-          <div class="auth-tabs" role="tablist">
-            <button class="active" type="button" data-auth-mode="login">Login</button>
-            <button type="button" data-auth-mode="register">Register</button>
+          <div class="auth-form-panel">
+            <div>
+              <p class="eyebrow">Photora account</p>
+              <h2>Log Masuk Sistem</h2>
+              <p>Sila pilih jenis akaun dan masukkan butiran anda.</p>
+            </div>
+            <div class="account-type-toggle" aria-label="Jenis pengguna">
+              <button class="active" type="button">Pengguna</button>
+              <button type="button">Staf</button>
+            </div>
+            <div class="auth-tabs" role="tablist">
+              <button class="active" type="button" data-auth-mode="login">Login</button>
+              <button type="button" data-auth-mode="register">Register</button>
+            </div>
+            <form class="auth-form" id="authForm">
+              <label class="register-only">
+                Nama
+                <input name="name" type="text" placeholder="Nama penuh" />
+              </label>
+              <label>
+                Email
+                <input name="email" type="email" placeholder="hello@photora.my" required />
+              </label>
+              <label>
+                Password
+                <input name="password" type="password" placeholder="Password" required />
+              </label>
+              <label class="remember-row">
+                <input type="checkbox" />
+                <span>Ingat saya</span>
+              </label>
+              <button class="primary-action full" type="submit" id="authSubmit">Login</button>
+              <p class="form-note" id="authNote" role="status"></p>
+            </form>
           </div>
-          <form class="auth-form" id="authForm">
-            <label class="register-only">
-              Nama
-              <input name="name" type="text" placeholder="Nama penuh" />
-            </label>
-            <label>
-              Email
-              <input name="email" type="email" placeholder="you@email.com" required />
-            </label>
-            <label>
-              Password
-              <input name="password" type="password" placeholder="Password" required />
-            </label>
-            <button class="primary-action full" type="submit" id="authSubmit">Login</button>
-            <p class="form-note" id="authNote" role="status"></p>
-          </form>
         </div>
       </section>
     </main>
@@ -869,6 +927,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=3.6.0"></script>
+    <script src="app.js?v=3.7.0"></script>
   </body>
 </html>

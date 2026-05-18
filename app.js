@@ -167,6 +167,7 @@ const scanNote = document.querySelector("#scanNote");
 const newsFeed = document.querySelector("#newsFeed");
 const newsForm = document.querySelector("#newsForm");
 const newsNote = document.querySelector("#newsNote");
+const accountTypeButtons = document.querySelectorAll(".account-type-toggle button");
 
 let walletConnected = false;
 let selectedCheckoutItem = null;
@@ -670,6 +671,17 @@ pageLinks.forEach((link) => {
     if (!page) return;
     event.preventDefault();
     showPage(page);
+  });
+});
+
+window.addEventListener("hashchange", () => {
+  showPage((window.location.hash || "#market").replace("#", ""), false);
+});
+
+accountTypeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    accountTypeButtons.forEach((item) => item.classList.remove("active"));
+    button.classList.add("active");
   });
 });
 
