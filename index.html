@@ -41,7 +41,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=4.20.0" />
+    <link rel="stylesheet" href="styles.css?v=4.21.0" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -81,6 +81,7 @@
       </button>
       <nav class="nav-links" id="primaryNav" aria-label="Navigasi utama">
         <a class="active" href="#market" data-page="market"><span>Marketplace</span></a>
+        <a href="#verify" data-page="verify"><span>Semakan</span></a>
         <a href="#mint" data-page="mint"><span>Mint Foto</span></a>
         <a href="#cart" data-page="cart"><span>Cart</span></a>
         <a href="#news" data-page="news"><span>News</span></a>
@@ -242,6 +243,54 @@
           <span id="itemCountLabel">0 items</span>
         </div>
         <div class="nft-grid" id="nftGrid" aria-live="polite"></div>
+      </section>
+
+      <section class="section verify-section page-section" id="verify" data-page="verify">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Free ownership verification</p>
+            <h2>AI-assisted camera scanner</h2>
+            <p>
+              Semak pemilikan foto Photora secara percuma menggunakan kamera mobile phone,
+              QR certificate, authenticity code atau image URL.
+            </p>
+          </div>
+        </div>
+        <div class="verify-layout">
+          <form class="scan-panel scanner-form" id="publicScanForm">
+            <div>
+              <p class="eyebrow">Photo authenticity</p>
+              <h3>Scan QR / foto / kod pemilikan</h3>
+              <p>
+                Buka di mobile phone dan tekan kamera untuk capture QR certificate atau upload
+                gambar. Jika asset berdaftar, sijil pemilikan akan dipaparkan.
+              </p>
+            </div>
+            <label>
+              Kod / URL sijil / image URL
+              <input name="query" type="text" placeholder="PHOTORA-... atau https://.../api/certificate/..." />
+            </label>
+            <label>
+              Camera mobile / upload QR
+              <input name="scan_image" type="file" accept="image/*" capture="environment" />
+            </label>
+            <button class="primary-action" type="submit">Scan ownership</button>
+            <p class="form-note scan-note" role="status"></p>
+          </form>
+          <article class="management-card verify-info-card">
+            <h3>Apabila hash verified dipaparkan</h3>
+            <p>
+              Pengunjung boleh lihat sijil pemilikan. Untuk claim royalti atau kemas kini
+              wallet payout, pengguna perlu register dan login ke Photora.
+            </p>
+            <div class="tool-list">
+              <span>QR certificate</span>
+              <span>Ownership ledger hash</span>
+              <span>Pemilik asal & baru</span>
+              <span>Claim royalti selepas register</span>
+            </div>
+          </article>
+        </div>
       </section>
 
       <section class="section about-section page-section" id="about" data-page="about">
@@ -994,7 +1043,7 @@
               </div>
             </article>
           </div>
-          <form class="scan-panel dashboard-module" id="scanForm">
+          <form class="scan-panel dashboard-module scanner-form" id="scanForm">
             <div>
               <p class="eyebrow">AI-assisted photo authenticity</p>
               <h3>Camera scanner ketulenan foto</h3>
@@ -1009,7 +1058,7 @@
               <input name="scan_image" type="file" accept="image/*" capture="environment" />
             </label>
             <button class="primary-action" type="submit">Scan photo / QR</button>
-            <p class="form-note" id="scanNote" role="status"></p>
+            <p class="form-note scan-note" id="scanNote" role="status"></p>
           </form>
           <div class="management-grid" id="dashboard-assets">
             <section class="management-card dashboard-module" data-role-card="user">
@@ -1291,6 +1340,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=4.20.0"></script>
+    <script src="app.js?v=4.21.0"></script>
   </body>
 </html>

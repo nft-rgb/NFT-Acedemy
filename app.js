@@ -179,6 +179,7 @@ const roleTools = document.querySelectorAll(".role-tools [data-page]");
 const roleCards = document.querySelectorAll("[data-role-card]");
 const scanForm = document.querySelector("#scanForm");
 const scanNote = document.querySelector("#scanNote");
+const scannerForms = document.querySelectorAll(".scanner-form");
 const newsFeed = document.querySelector("#newsFeed");
 const newsForm = document.querySelector("#newsForm");
 const newsNote = document.querySelector("#newsNote");
@@ -1415,22 +1416,24 @@ portalNewsList.addEventListener("click", async (event) => {
   }
 });
 
-scanForm.addEventListener("submit", async (event) => {
+async function handleScannerSubmit(event) {
   event.preventDefault();
-  const data = new FormData(scanForm);
+  const form = event.currentTarget;
+  const note = form.querySelector(".scan-note") || scanNote;
+  const data = new FormData(form);
   const imageFile = data.get("scan_image");
   let detectedQr = "";
   if (imageFile && imageFile.size) {
-    scanNote.textContent = "Mencuba baca QR code daripada kamera/upload...";
+    note.textContent = "Mencuba baca QR code daripada kamera/upload...";
     detectedQr = await detectQrFromImage(imageFile);
   }
   const uploadedImage = imageFile && imageFile.size ? await readFileAsDataUrl(imageFile) : "";
   const query = data.get("query") || detectedQr || uploadedImage;
   if (!query) {
-    scanNote.textContent = "Masukkan kod/URL atau upload gambar untuk scan.";
+    note.textContent = "Masukkan kod/URL atau upload gambar untuk scan.";
     return;
   }
-  scanNote.textContent = detectedQr
+  note.textContent = detectedQr
     ? "QR code ditemui. Semakan sijil sedang dibuat..."
     : uploadedImage
       ? "AI-assisted scanner sedang analisis gambar..."
@@ -1438,14 +1441,18 @@ scanForm.addEventListener("submit", async (event) => {
   try {
     const result = await apiRequest("/api/photos/verify", {
       method: "POST",
-      body: JSON.stringify({ query, mode: uploadedImage ? "camera_image" : "code_or_url" }),
+      body: JSON.stringify({ query, mode: detectedQr ? "qr_code" : uploadedImage ? "camera_image" : "code_or_url" }),
     });
-    scanNote.innerHTML = result.valid
+    note.innerHTML = result.valid
       ? `Sah: ${escapeHtml(result.photo.title)} (${escapeHtml(result.photo.authenticity_code || "registered asset")}). <a href="${escapeHtml(result.certificateUrl)}" target="_blank" rel="noopener">Buka sijil pemilikan</a><br><small>${escapeHtml(result.aiAnalysis || "")}</small>`
       : `Tidak ditemui dalam rekod Photora. ${escapeHtml(result.aiAnalysis || "Semak semula kod, URL atau gambar.")}`;
   } catch (error) {
-    scanNote.textContent = error.message;
+    note.textContent = error.message;
   }
+}
+
+scannerForms.forEach((form) => {
+  form.addEventListener("submit", handleScannerSubmit);
 });
 
 menuToggle.addEventListener("click", () => {

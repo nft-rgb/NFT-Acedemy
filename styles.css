@@ -273,7 +273,8 @@
 
   .portal-shell .dashboard-grid,
   .sales-strip,
-  .role-dashboard-grid {
+  .role-dashboard-grid,
+  .verify-layout {
     grid-template-columns: 1fr;
   }
 }
@@ -1658,6 +1659,40 @@ body.cart-checkout-mode #checkout {
   padding: 0 13px;
   border: 1px solid var(--line);
   border-radius: 8px;
+}
+
+.verify-section {
+  background: #f8fafc;
+}
+
+.verify-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.verify-section .scan-panel {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+}
+
+.verify-info-card {
+  background: #101828;
+  color: #fff;
+}
+
+.verify-info-card p {
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.6;
+}
+
+.verify-info-card .tool-list span {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
 }
 
 .auth-code {
