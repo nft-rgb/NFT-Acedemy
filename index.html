@@ -34,7 +34,7 @@
         <a href="#checkout" data-page="checkout"><span>Pay</span></a>
         <a href="#mint" data-page="mint"><span>Mint</span></a>
         <a href="#cms" data-page="cms"><span>CMS</span></a>
-        <a href="#dashboard" data-page="dashboard"><span>Dash</span></a>
+        <a href="#dashboard" data-page="dashboard"><span>Portal</span></a>
         <a class="secondary-nav" href="#protection" data-page="protection"><span>Protect</span></a>
         <a class="secondary-nav" href="#security" data-page="security"><span>Security</span></a>
         <a class="secondary-nav" href="#growth" data-page="growth"><span>Growth</span></a>
@@ -617,8 +617,8 @@
       <section class="section dashboard page-section" id="dashboard" data-page="dashboard">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Operations</p>
-            <h2>Dashboard ringkas</h2>
+            <p class="eyebrow">Role portal</p>
+            <h2>Portal pengurusan Photora</h2>
           </div>
         </div>
         <div class="dashboard-grid">
@@ -696,6 +696,51 @@
             <button type="button" data-page="cms">CMS admin</button>
             <button type="button" data-page="security">Security</button>
           </div>
+          <div class="portal-workspace">
+            <article class="portal-card" data-role-card="user">
+              <h3>User portal</h3>
+              <p>Urus profile, asset foto yang dibeli, wallet crypto/cash, LUNO wallet dan sejarah order.</p>
+              <div class="tool-list">
+                <span>My photo assets</span>
+                <span>Wallet cash</span>
+                <span>LUNO crypto wallet</span>
+                <span>Purchase history</span>
+              </div>
+            </article>
+            <article class="portal-card" data-role-card="admin">
+              <h3>Admin portal</h3>
+              <p>Semak foto pending, approve/reject asset, scan authenticity code dan pantau transaksi platform.</p>
+              <div class="tool-list">
+                <span>Photo approval</span>
+                <span>Order review</span>
+                <span>Creator support</span>
+                <span>Authenticity scan</span>
+              </div>
+            </article>
+            <article class="portal-card" data-role-card="super_admin">
+              <h3>Super admin portal</h3>
+              <p>Kawal semua user, admin, konfigurasi platform, fee, security dan audit photo marketplace.</p>
+              <div class="tool-list">
+                <span>User roles</span>
+                <span>Platform fees</span>
+                <span>Security audit</span>
+                <span>System settings</span>
+              </div>
+            </article>
+          </div>
+          <form class="scan-panel" id="scanForm">
+            <div>
+              <p class="eyebrow">Photo authenticity</p>
+              <h3>Scan kod keaslian foto</h3>
+              <p>Setiap foto yang didaftarkan akan mempunyai kod khas Photora untuk semakan keaslian asset.</p>
+            </div>
+            <label>
+              Kod / image URL
+              <input name="query" type="text" placeholder="PHOTORA-... atau URL gambar" required />
+            </label>
+            <button class="primary-action" type="submit">Scan photo</button>
+            <p class="form-note" id="scanNote" role="status"></p>
+          </form>
         </div>
       </section>
     </main>
@@ -744,7 +789,7 @@
     </footer>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <section class="auth-modal" id="authModal" hidden aria-label="Account login">
+    <section class="auth-modal page-section" id="authModal" data-page="login" aria-label="Account login">
       <div class="auth-card">
         <button class="auth-close" id="authClose" type="button" aria-label="Close login">x</button>
         <div>

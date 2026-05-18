@@ -152,6 +152,15 @@ function publicUser(user) {
   };
 }
 
+function makeAuthenticityCode(input) {
+  const source = `${input.title || ""}|${input.image_url || input.image || ""}|${input.creator_name || ""}|${Date.now()}`;
+  return `PHOTORA-${crypto.createHash("sha256").update(source).digest("hex").slice(0, 16).toUpperCase()}`;
+}
+
+function makePerceptualHash(value) {
+  return crypto.createHash("sha256").update(String(value || "")).digest("hex");
+}
+
 function createSession(user) {
   const token = crypto
     .createHmac("sha256", config.sessionSecret)
@@ -291,6 +300,8 @@ function createLocalStore() {
         category: input.category,
         price_eth: Number(input.price_eth || input.price || 0),
         image_url: input.image_url || input.image,
+        authenticity_code: makeAuthenticityCode(input),
+        perceptual_hash: makePerceptualHash(input.image_url || input.image),
         description: input.description || "",
         source_type: input.source_type || "mobilegraphy",
         status: user.role === "user" ? "pending" : "approved",
@@ -309,6 +320,14 @@ function createLocalStore() {
     },
     async getPhotoById(id) {
       return data.photos.find((photo) => photo.id === Number(id)) || null;
+    },
+    async verifyPhoto(query) {
+      const needle = String(query || "").trim().toLowerCase();
+      return (
+        data.photos.find((photo) => String(photo.authenticity_code || "").toLowerCase() === needle) ||
+        data.photos.find((photo) => String(photo.image_url || "").toLowerCase() === needle) ||
+        null
+      );
     },
     async createOrder(input) {
       const order = {
@@ -357,6 +376,28 @@ async function ensureUserColumns(pool) {
       if (error.code !== "ER_DUP_FIELDNAME") throw error;
     }
   }
+  const photoColumns = [
+    ["authenticity_code", "VARCHAR(80) NULL UNIQUE"],
+    ["perceptual_hash", "VARCHAR(128) NULL"],
+  ];
+  for (const [column, definition] of photoColumns) {
+    try {
+      await pool.query(`ALTER TABLE photos ADD COLUMN ${column} ${definition}`);
+    } catch (error) {
+      if (!["ER_DUP_FIELDNAME", "ER_DUP_KEYNAME"].includes(error.code)) throw error;
+    }
+  }
+}
+
+async function backfillPhotoAuthenticity(pool) {
+  const [rows] = await pool.execute("SELECT id, title, image_url, creator_name FROM photos WHERE authenticity_code IS NULL OR authenticity_code = ''");
+  for (const row of rows) {
+    await pool.execute("UPDATE photos SET authenticity_code = ?, perceptual_hash = ? WHERE id = ?", [
+      makeAuthenticityCode(row),
+      makePerceptualHash(row.image_url),
+      row.id,
+    ]);
+  }
 }
 
 function createMysqlStore(pool) {
@@ -375,6 +416,7 @@ function createMysqlStore(pool) {
         }
       }
       await ensureUserColumns(pool);
+      await backfillPhotoAuthenticity(pool);
       const [rows] = await pool.execute("SELECT id FROM users WHERE role = 'super_admin' ORDER BY id ASC LIMIT 1");
       if (rows.length === 0) {
         await pool.execute(
@@ -388,13 +430,15 @@ function createMysqlStore(pool) {
       if (photoRows.length === 0) {
         for (const photo of seedPhotos) {
           await pool.execute(
-            "INSERT INTO photos (title, creator_name, category, price_eth, image_url, description, source_type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO photos (title, creator_name, category, price_eth, image_url, authenticity_code, perceptual_hash, description, source_type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
               photo.title,
               photo.creator_name,
               photo.category,
               photo.price_eth,
               photo.image_url,
+              makeAuthenticityCode(photo),
+              makePerceptualHash(photo.image_url),
               photo.description,
               photo.source_type,
               photo.status,
@@ -457,7 +501,7 @@ function createMysqlStore(pool) {
     async createPhoto(input, user) {
       const status = user.role === "user" ? "pending" : "approved";
       const [result] = await pool.execute(
-        "INSERT INTO photos (title, creator_id, creator_name, category, price_eth, image_url, description, source_type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO photos (title, creator_id, creator_name, category, price_eth, image_url, authenticity_code, perceptual_hash, description, source_type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           input.title,
           user.id,
@@ -465,6 +509,8 @@ function createMysqlStore(pool) {
           input.category,
           Number(input.price_eth || input.price || 0),
           input.image_url || input.image,
+          makeAuthenticityCode({ ...input, creator_name: user.name }),
+          makePerceptualHash(input.image_url || input.image),
           input.description || "",
           input.source_type || "mobilegraphy",
           status,
@@ -478,6 +524,13 @@ function createMysqlStore(pool) {
     },
     async getPhotoById(id) {
       const [rows] = await pool.execute("SELECT * FROM photos WHERE id = ? LIMIT 1", [id]);
+      return rows[0] || null;
+    },
+    async verifyPhoto(query) {
+      const [rows] = await pool.execute(
+        "SELECT * FROM photos WHERE authenticity_code = ? OR image_url = ? OR perceptual_hash = ? LIMIT 1",
+        [query, query, makePerceptualHash(query)],
+      );
       return rows[0] || null;
     },
     async createOrder(input) {
@@ -678,6 +731,25 @@ async function handleApi(req, res, pathname) {
 
   if (req.method === "GET" && pathname === "/api/market/crypto-prices") {
     sendJson(res, 200, { prices: await getCryptoPrices() });
+    return true;
+  }
+
+  if (req.method === "POST" && pathname === "/api/photos/verify") {
+    const payload = await readJson(req);
+    const photo = await db.verifyPhoto(payload.query || "");
+    sendJson(res, 200, {
+      valid: Boolean(photo),
+      photo: photo
+        ? {
+            id: photo.id,
+            title: photo.title,
+            creator_name: photo.creator_name,
+            category: photo.category,
+            status: photo.status,
+            authenticity_code: photo.authenticity_code,
+          }
+        : null,
+    });
     return true;
   }
 

@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS photos (
   category VARCHAR(80) NOT NULL,
   price_eth DECIMAL(12,4) NOT NULL DEFAULT 0.0000,
   image_url TEXT NOT NULL,
+  authenticity_code VARCHAR(80) NULL UNIQUE,
+  perceptual_hash VARCHAR(128) NULL,
   description TEXT NULL,
   source_type ENUM('dslr', 'mobilegraphy') NOT NULL DEFAULT 'mobilegraphy',
   status ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending',

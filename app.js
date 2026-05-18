@@ -161,6 +161,9 @@ const roleBadge = document.querySelector("#roleBadge");
 const cryptoPriceList = document.querySelector("#cryptoPriceList");
 const refreshCryptoButton = document.querySelector("#refreshCryptoButton");
 const roleTools = document.querySelectorAll(".role-tools [data-page]");
+const roleCards = document.querySelectorAll("[data-role-card]");
+const scanForm = document.querySelector("#scanForm");
+const scanNote = document.querySelector("#scanNote");
 
 let walletConnected = false;
 let selectedCheckoutItem = null;
@@ -217,11 +220,12 @@ function normalisePhoto(photo) {
     image: photo.image || photo.image_url,
     description: photo.description || "",
     status: photo.status || "approved",
+    authenticityCode: photo.authenticity_code || "",
   };
 }
 
 function updateAccountUi() {
-  accountButton.textContent = currentUser ? `${currentUser.role}: ${currentUser.name}` : "Login";
+  accountButton.textContent = currentUser ? "Portal" : "Login";
   roleBadge.textContent = currentUser?.role || "Guest";
   roleDashboardTitle.textContent = currentUser
     ? `Dashboard ${currentUser.role.replace("_", " ")}`
@@ -233,6 +237,15 @@ function updateAccountUi() {
     walletForm.elements.wallet_cash.value = currentUser.wallet_cash || "";
     walletForm.elements.luno_wallet.value = currentUser.luno_wallet || "";
   }
+  roleCards.forEach((card) => {
+    const role = card.dataset.roleCard;
+    const allowed =
+      !currentUser ||
+      role === "user" ||
+      currentUser.role === "super_admin" ||
+      (currentUser.role === "admin" && role === "admin");
+    card.hidden = !allowed;
+  });
 }
 
 function setAuthMode(mode) {
@@ -429,6 +442,13 @@ function renderCards() {
     tag.textContent = item.category;
     cardTop.append(titleWrap, tag);
 
+    if (item.authenticityCode) {
+      const code = document.createElement("span");
+      code.className = "auth-code";
+      code.textContent = item.authenticityCode;
+      titleWrap.appendChild(code);
+    }
+
     const cardBottom = document.createElement("div");
     cardBottom.className = "card-bottom";
     const price = document.createElement("strong");
@@ -480,23 +500,16 @@ walletButton.addEventListener("click", () => {
 
 accountButton.addEventListener("click", async () => {
   if (currentUser) {
-    try {
-      await apiRequest("/api/auth/logout", { method: "POST", body: "{}" });
-      currentUser = null;
-      updateAccountUi();
-      showToast("Akaun sudah logout.");
-    } catch (error) {
-      showToast(error.message);
-    }
+    showPage("dashboard");
     return;
   }
 
-  authModal.hidden = false;
+  showPage("login");
   setAuthMode("login");
 });
 
 authClose.addEventListener("click", () => {
-  authModal.hidden = true;
+  showPage("market");
 });
 
 authTabs.forEach((button) => {
@@ -519,9 +532,9 @@ authForm.addEventListener("submit", async (event) => {
     currentUser = result.user;
     updateAccountUi();
     authForm.reset();
-    authModal.hidden = true;
     showToast(`Login sebagai ${currentUser.role}.`);
     await loadPhotos();
+    showPage("dashboard");
   } catch (error) {
     authNote.textContent = error.message;
   }
@@ -531,7 +544,7 @@ profileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!currentUser) {
     profileNote.textContent = "Login dahulu untuk update profile.";
-    authModal.hidden = false;
+    showPage("login");
     return;
   }
   const data = new FormData(profileForm);
@@ -558,7 +571,7 @@ walletForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!currentUser) {
     walletNote.textContent = "Login dahulu untuk update wallet.";
-    authModal.hidden = false;
+    showPage("login");
     return;
   }
   const data = new FormData(walletForm);
@@ -585,6 +598,23 @@ refreshCryptoButton.addEventListener("click", loadCryptoPrices);
 
 roleTools.forEach((button) => {
   button.addEventListener("click", () => showPage(button.dataset.page));
+});
+
+scanForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const query = new FormData(scanForm).get("query");
+  scanNote.textContent = "Scanning authenticity code...";
+  try {
+    const result = await apiRequest("/api/photos/verify", {
+      method: "POST",
+      body: JSON.stringify({ query }),
+    });
+    scanNote.textContent = result.valid
+      ? `Sah: ${result.photo.title} (${result.photo.authenticity_code || "registered asset"})`
+      : "Tidak ditemui dalam rekod Photora. Semak semula kod atau URL gambar.";
+  } catch (error) {
+    scanNote.textContent = error.message;
+  }
 });
 
 menuToggle.addEventListener("click", () => {
@@ -621,8 +651,8 @@ categoryPills.forEach((button) => {
 mintForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!currentUser) {
-    authModal.hidden = false;
     formNote.textContent = "Login dahulu sebelum submit foto.";
+    showPage("login");
     return;
   }
   const data = new FormData(mintForm);

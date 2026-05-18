@@ -1235,6 +1235,63 @@ h2 {
   font-weight: 850;
 }
 
+.portal-workspace {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.portal-card,
+.scan-panel {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.portal-card h3,
+.scan-panel h3 {
+  margin: 0;
+}
+
+.portal-card p,
+.scan-panel p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.scan-panel {
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.6fr) auto;
+  align-items: end;
+}
+
+.scan-panel label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.scan-panel input {
+  min-height: 46px;
+  width: 100%;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.auth-code {
+  display: block;
+  margin-top: 7px;
+  color: var(--blue);
+  font-size: 0.72rem;
+  font-weight: 900;
+  word-break: break-word;
+}
+
 .settings-form h3,
 .table-heading h3,
 .creator-tools h3 {
@@ -1463,13 +1520,9 @@ th {
 }
 
 .auth-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: grid;
-  place-items: center;
-  padding: 18px;
-  background: rgba(15, 23, 42, 0.58);
+  min-height: calc(100vh - 72px);
+  padding: clamp(22px, 5vw, 56px);
+  background: radial-gradient(circle at top left, rgba(255, 204, 0, 0.16), transparent 34%), var(--bg);
 }
 
 .auth-card {
@@ -1477,6 +1530,7 @@ th {
   display: grid;
   gap: 16px;
   width: min(440px, 100%);
+  margin: 0 auto;
   padding: 22px;
   border-radius: 18px;
   background: var(--surface);
@@ -1705,6 +1759,7 @@ th {
   .security-grid,
   .growth-grid,
   .role-dashboard-grid,
+  .portal-workspace,
   .cms-metrics,
   .portal-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1763,6 +1818,10 @@ th {
     justify-content: center;
     min-height: 38px;
     padding: 0 12px;
+  }
+
+  .wallet-button {
+    display: none;
   }
 
   .account-button {
@@ -1871,6 +1930,7 @@ th {
   .security-grid,
   .growth-grid,
   .role-dashboard-grid,
+  .portal-workspace,
   .cms-metrics,
   .portal-grid {
     grid-template-columns: 1fr;
@@ -1878,6 +1938,10 @@ th {
 
   .cms-sidebar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .scan-panel {
+    grid-template-columns: 1fr;
   }
 
   .table-wrap {
