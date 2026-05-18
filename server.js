@@ -1,7 +1,9 @@
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const http = require("node:http");
+const net = require("node:net");
 const path = require("node:path");
+const tls = require("node:tls");
 const { URLSearchParams } = require("node:url");
 
 const root = __dirname;
@@ -38,6 +40,11 @@ const config = {
   superAdminEmail: process.env.SUPER_ADMIN_EMAIL || "admin@photora.local",
   superAdminPassword: process.env.SUPER_ADMIN_PASSWORD || "ChangeMe123!",
   mailFrom: process.env.MAIL_FROM || "hello@photora.my",
+  smtpHost: process.env.SMTP_HOST || "",
+  smtpPort: Number(process.env.SMTP_PORT || 465),
+  smtpUser: process.env.SMTP_USER || "",
+  smtpPass: process.env.SMTP_PASS || "",
+  smtpSecure: process.env.SMTP_SECURE !== "false",
   whatsappWebhookUrl: process.env.WHATSAPP_WEBHOOK_URL || "",
 };
 
@@ -298,6 +305,65 @@ function makeAppUrl(pathname, params = {}) {
   return url.toString();
 }
 
+function smtpRead(socket) {
+  return new Promise((resolve, reject) => {
+    let buffer = "";
+    const onData = (chunk) => {
+      buffer += chunk.toString("utf8");
+      const lines = buffer.split(/\r?\n/).filter(Boolean);
+      const last = lines[lines.length - 1] || "";
+      if (/^\d{3} /.test(last)) {
+        socket.off("data", onData);
+        resolve(buffer);
+      }
+    };
+    socket.on("data", onData);
+    socket.once("error", reject);
+  });
+}
+
+async function smtpCommand(socket, command, expected = /^[23]/) {
+  if (command) socket.write(`${command}\r\n`);
+  const response = await smtpRead(socket);
+  if (!expected.test(response)) throw new Error(`SMTP failed: ${response.trim()}`);
+  return response;
+}
+
+function encodeAddress(value) {
+  return String(value || "").replace(/[<>\r\n]/g, "");
+}
+
+async function sendSmtpMail({ to, subject, text }) {
+  if (!config.smtpHost || !config.smtpUser || !config.smtpPass) return false;
+  const socket = config.smtpSecure
+    ? tls.connect({ host: config.smtpHost, port: config.smtpPort, servername: config.smtpHost })
+    : net.connect({ host: config.smtpHost, port: config.smtpPort });
+
+  await smtpCommand(socket, null, /^220/);
+  await smtpCommand(socket, `EHLO ${config.appBaseUrl.replace(/^https?:\/\//, "").split("/")[0] || "photora.local"}`);
+  await smtpCommand(socket, "AUTH LOGIN", /^334/);
+  await smtpCommand(socket, Buffer.from(config.smtpUser).toString("base64"), /^334/);
+  await smtpCommand(socket, Buffer.from(config.smtpPass).toString("base64"), /^235/);
+  await smtpCommand(socket, `MAIL FROM:<${encodeAddress(config.mailFrom || config.smtpUser)}>`);
+  await smtpCommand(socket, `RCPT TO:<${encodeAddress(to)}>`);
+  await smtpCommand(socket, "DATA", /^354/);
+  const message = [
+    `From: Photora <${encodeAddress(config.mailFrom || config.smtpUser)}>`,
+    `To: <${encodeAddress(to)}>`,
+    `Subject: ${String(subject || "Photora").replace(/[\r\n]/g, " ")}`,
+    "MIME-Version: 1.0",
+    "Content-Type: text/plain; charset=UTF-8",
+    "",
+    text,
+    ".",
+    "",
+  ].join("\r\n");
+  await smtpCommand(socket, message);
+  socket.write("QUIT\r\n");
+  socket.end();
+  return true;
+}
+
 async function sendAccountLink(user, type, url) {
   const subject = type === "email_verify" ? "Sahkan akaun Photora" : "Reset password Photora";
   const message =
@@ -306,6 +372,11 @@ async function sendAccountLink(user, type, url) {
       : `Klik link ini untuk reset password Photora anda: ${url}`;
 
   console.log(`[Photora notification] to=${user.email} subject="${subject}" ${url}`);
+
+  const emailSent = await sendSmtpMail({ to: user.email, subject, text: message }).catch((error) => {
+    console.warn("SMTP email failed:", error.message);
+    return false;
+  });
 
   if (config.whatsappWebhookUrl && user.phone) {
     await fetch(config.whatsappWebhookUrl, {
@@ -316,9 +387,9 @@ async function sendAccountLink(user, type, url) {
   }
 
   return {
-    channel: config.whatsappWebhookUrl && user.phone ? "email_whatsapp" : "preview",
+    channel: emailSent ? "email" : config.whatsappWebhookUrl && user.phone ? "email_whatsapp" : "preview",
     to: user.email,
-    previewUrl: url,
+    previewUrl: emailSent ? undefined : url,
   };
 }
 
