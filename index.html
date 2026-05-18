@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=4.6.0" />
+    <link rel="stylesheet" href="styles.css?v=4.16.0" />
   </head>
   <body>
     <header class="topbar">
@@ -255,6 +255,7 @@
           <aside class="checkout-card" aria-label="Checkout preview">
             <span class="metric-label">Selected photo</span>
             <strong id="checkoutTitle">Pilih foto di marketplace</strong>
+            <div class="checkout-items" id="checkoutItems"></div>
             <div class="checkout-row">
               <span>Crypto price</span>
               <b id="checkoutEth">0.00 ETH</b>
@@ -288,6 +289,11 @@
             <button class="primary-action full" id="payFiatButton" type="button">Pay with MYR</button>
             <p class="form-note" id="checkoutNote" role="status"></p>
             <div class="receipt-links" id="checkoutReceiptLinks" hidden></div>
+            <div class="checkout-success" id="checkoutSuccess" hidden>
+              <span>Order berjaya dicipta</span>
+              <strong id="checkoutSuccessTitle">Menunggu bayaran</strong>
+              <p id="checkoutSuccessText">Selesaikan bayaran ToyyibPay untuk aktifkan pembelian digital.</p>
+            </div>
           </aside>
         </div>
       </section>
@@ -304,9 +310,9 @@
           <aside class="cart-summary">
             <span class="metric-label">Ringkasan bayaran</span>
             <div class="checkout-row"><span>Subtotal</span><b id="cartSubtotal">RM 0.00</b></div>
-            <div class="checkout-row"><span>Service fee 6%</span><b id="cartServiceFee">RM 0.00</b></div>
+            <div class="checkout-row"><span>Platform split 6%</span><b id="cartServiceFee">RM 0.00</b></div>
             <div class="checkout-row"><span>Total</span><b id="cartTotal">RM 0.00</b></div>
-            <p>Fee platform 6% ditolak daripada hasil jualan untuk split payment. Listing fee marketplace ialah RM2 setiap foto.</p>
+            <p>Total ialah jumlah pembeli bayar. Platform split 6% direkod untuk laporan jualan dan payout creator.</p>
             <button class="primary-action full" id="cartCheckoutButton" type="button">Checkout cart</button>
             <p class="form-note" id="cartNote" role="status"></p>
           </aside>
@@ -1223,6 +1229,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=4.6.0"></script>
+    <script src="app.js?v=4.16.0"></script>
   </body>
 </html>

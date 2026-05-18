@@ -138,10 +138,14 @@ const checkoutMyr = document.querySelector("#checkoutMyr");
 const checkoutNote = document.querySelector("#checkoutNote");
 const paymentMethod = document.querySelector("#paymentMethod");
 const payFiatButton = document.querySelector("#payFiatButton");
+const checkoutItems = document.querySelector("#checkoutItems");
 const checkoutBuyerName = document.querySelector("#checkoutBuyerName");
 const checkoutBuyerEmail = document.querySelector("#checkoutBuyerEmail");
 const checkoutBuyerPhone = document.querySelector("#checkoutBuyerPhone");
 const checkoutReceiptLinks = document.querySelector("#checkoutReceiptLinks");
+const checkoutSuccess = document.querySelector("#checkoutSuccess");
+const checkoutSuccessTitle = document.querySelector("#checkoutSuccessTitle");
+const checkoutSuccessText = document.querySelector("#checkoutSuccessText");
 const chatToggle = document.querySelector("#chatToggle");
 const chatPanel = document.querySelector("#chatPanel");
 const chatClose = document.querySelector("#chatClose");
@@ -221,6 +225,7 @@ let slideTimer = null;
 let ethToMyr = 15000;
 let managedNewsPosts = [];
 let cartItems = JSON.parse(localStorage.getItem("photoraCart") || "[]");
+let lastCheckoutOrder = JSON.parse(localStorage.getItem("photoraLastCheckoutOrder") || "null");
 const transactions = [
   { item: "Konvo Seri Gemilang #018", buyer: "0x92B4...A81D", payment: "Wallet", gross: 0.42, type: "primary" },
   { item: "Akad Nikah Frame #012", buyer: "guest-1042", payment: "FPX", gross: 0.27, type: "primary" },
@@ -267,6 +272,32 @@ function setCheckoutReceiptLinks(receipts) {
     ${receipts.buyerReceiptUrl ? `<a href="${escapeHtml(receipts.buyerReceiptUrl)}" target="_blank" rel="noopener">Resit pembelian</a>` : ""}
     ${receipts.sellerReceiptUrl ? `<a href="${escapeHtml(receipts.sellerReceiptUrl)}" target="_blank" rel="noopener">Resit jualan creator</a>` : ""}
   `;
+}
+
+function renderCheckoutItems(items = []) {
+  if (!checkoutItems) return;
+  checkoutItems.innerHTML = items.length
+    ? items
+        .map(
+          (item) => `<div class="checkout-item">
+            <img src="${escapeHtml(item.image || "assets/photoralogo.png")}" alt="" />
+            <div><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.creator || "Photora Creator")}</span></div>
+            <b>${formatMyr(item.priceMyr || item.price * ethToMyr || 0)}</b>
+          </div>`,
+        )
+        .join("")
+    : "";
+}
+
+function setCheckoutSuccess(order) {
+  if (!checkoutSuccess) return;
+  if (!order) {
+    checkoutSuccess.hidden = true;
+    return;
+  }
+  checkoutSuccess.hidden = false;
+  checkoutSuccessTitle.textContent = `Order ${order.orderId || "-"} direkod`;
+  checkoutSuccessText.textContent = `${order.title || "Pembelian digital"} bernilai ${formatMyr(order.amountMyr || 0)} sedang menunggu bayaran ToyyibPay. Cart telah dikosongkan selepas order dicipta.`;
 }
 
 function makeSummary(text, length = 145) {
@@ -787,6 +818,7 @@ function showPage(page, shouldUpdateHash = true) {
     return;
   }
   document.body.classList.toggle("login-mode", targetPage === "login");
+  document.body.classList.toggle("cart-checkout-mode", targetPage === "checkout");
   pageSections.forEach((section) => {
     section.classList.toggle("active", section.dataset.page === targetPage);
   });
@@ -799,20 +831,61 @@ function showPage(page, shouldUpdateHash = true) {
     history.replaceState(null, "", `#${targetPage}`);
   }
 
+  if (targetPage === "checkout" && !selectedCheckoutItem && lastCheckoutOrder) {
+    checkoutTitle.textContent = lastCheckoutOrder.title || "Order Photora";
+    checkoutEth.textContent = "Order MYR";
+    checkoutMyr.textContent = formatMyr(lastCheckoutOrder.amountMyr || 0);
+    checkoutNote.textContent = "Order terakhir masih tersedia. Selesaikan bayaran atau buka resit di bawah.";
+    renderCheckoutItems([]);
+    setCheckoutReceiptLinks(lastCheckoutOrder);
+    setCheckoutSuccess(lastCheckoutOrder);
+  }
+
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+function forcePage(page) {
+  document.querySelectorAll(".page-section").forEach((section) => {
+    section.classList.toggle("active", section.dataset.page === page);
+  });
+  if (page === "checkout") {
+    const checkoutSection = document.querySelector("#checkout");
+    const cartSection = document.querySelector("#cart");
+    if (checkoutSection) checkoutSection.style.setProperty("display", "block", "important");
+    if (cartSection) cartSection.style.setProperty("display", "none", "important");
+  } else {
+    const checkoutSection = document.querySelector("#checkout");
+    const cartSection = document.querySelector("#cart");
+    if (checkoutSection) checkoutSection.style.removeProperty("display");
+    if (cartSection) cartSection.style.removeProperty("display");
+  }
+  primaryNav.querySelectorAll("a").forEach((link) => {
+    link.classList.toggle("active", link.dataset.page === page);
+  });
+  history.replaceState(null, "", `#${page}`);
+}
+
 function selectCheckoutItem(item) {
-  selectedCheckoutItem = item;
+  selectedCheckoutItem = { ...item, items: [item], amountMyr: item.priceMyr || item.price * ethToMyr };
   checkoutTitle.textContent = item.title;
   checkoutEth.textContent = formatPrice(item.price);
-  checkoutMyr.textContent = formatMyr(item.price * ethToMyr);
+  checkoutMyr.textContent = formatMyr(selectedCheckoutItem.amountMyr);
   checkoutNote.textContent = "Sedia untuk checkout cash MYR menggunakan ToyyibPay.";
+  try {
+    showPage("checkout");
+    forcePage("checkout");
+    document.body.classList.add("cart-checkout-mode");
+    cartNote.textContent = "Order cart dipindahkan ke checkout.";
+    if (location.hash !== "#checkout") location.hash = "checkout";
+  } catch (error) {
+    checkoutNote.textContent = `Checkout page gagal dibuka: ${error.message}`;
+  }
+  renderCheckoutItems(selectedCheckoutItem.items);
   setCheckoutReceiptLinks(null);
+  setCheckoutSuccess(null);
   if (checkoutBuyerName) checkoutBuyerName.value = currentUser?.name || "";
   if (checkoutBuyerEmail) checkoutBuyerEmail.value = currentUser?.email || "";
   if (checkoutBuyerPhone) checkoutBuyerPhone.value = currentUser?.phone || currentUser?.mobile_phone || "";
-  showPage("checkout");
 }
 
 function getPlatformCut(transaction) {
@@ -1411,16 +1484,27 @@ cartCheckoutButton.addEventListener("click", () => {
     id: cartItems[0].id,
     title: `Photora cart (${cartItems.length} foto)`,
     price: subtotal / ethToMyr,
+    amountMyr: subtotal,
+    items: [...cartItems],
   };
   checkoutTitle.textContent = selectedCheckoutItem.title;
   checkoutEth.textContent = formatPrice(selectedCheckoutItem.price);
   checkoutMyr.textContent = formatMyr(subtotal);
-  checkoutNote.textContent = `Termasuk split platform ${feeSettings.platformFee}% dan payout creator.`;
+  checkoutNote.textContent = `Semak ${cartItems.length} foto sebelum bayar. Platform split ${feeSettings.platformFee}% direkod untuk payout creator.`;
+  try {
+    showPage("checkout");
+    forcePage("checkout");
+    cartNote.textContent = "Order cart dipindahkan ke checkout.";
+    if (location.hash !== "#checkout") location.hash = "checkout";
+  } catch (error) {
+    cartNote.textContent = `Checkout page gagal dibuka: ${error.message}`;
+  }
+  renderCheckoutItems(selectedCheckoutItem.items);
   setCheckoutReceiptLinks(null);
+  setCheckoutSuccess(null);
   if (checkoutBuyerName) checkoutBuyerName.value = currentUser?.name || "";
   if (checkoutBuyerEmail) checkoutBuyerEmail.value = currentUser?.email || "";
   if (checkoutBuyerPhone) checkoutBuyerPhone.value = currentUser?.phone || currentUser?.mobile_phone || "";
-  showPage("checkout");
 });
 
 createUserForm.addEventListener("submit", async (event) => {
@@ -1551,7 +1635,7 @@ payFiatButton.addEventListener("click", async () => {
   }
 
   const method = paymentMethod.value;
-  const amountMyr = selectedCheckoutItem.price * ethToMyr;
+  const amountMyr = Number(selectedCheckoutItem.amountMyr || selectedCheckoutItem.price * ethToMyr || 0);
   const customerName = checkoutBuyerName?.value.trim() || currentUser?.name || "Photora Buyer";
   const customerEmail = checkoutBuyerEmail?.value.trim() || currentUser?.email || "buyer@example.com";
   const customerPhone = checkoutBuyerPhone?.value.trim() || currentUser?.phone || currentUser?.mobile_phone || "0100000000";
@@ -1568,6 +1652,12 @@ payFiatButton.addEventListener("click", async () => {
         amountCents: Math.round(amountMyr * 100),
         amountEth: selectedCheckoutItem.price,
         photoId: selectedCheckoutItem.id,
+        items: (selectedCheckoutItem.items || []).map((item) => ({
+          id: item.id,
+          title: item.title,
+          priceMyr: item.priceMyr || item.price * ethToMyr || 0,
+          creator: item.creator,
+        })),
         customerName,
         customerEmail,
         customerPhone,
@@ -1588,7 +1678,22 @@ payFiatButton.addEventListener("click", async () => {
       type: "primary",
     });
     updateMetrics();
+    lastCheckoutOrder = {
+      orderId: result.orderId,
+      title: selectedCheckoutItem.title,
+      amountMyr,
+      checkoutUrl: result.checkoutUrl,
+      buyerReceiptUrl: result.buyerReceiptUrl,
+      sellerReceiptUrl: result.sellerReceiptUrl,
+    };
+    localStorage.setItem("photoraLastCheckoutOrder", JSON.stringify(lastCheckoutOrder));
+    if (selectedCheckoutItem.items?.length) {
+      cartItems = [];
+      saveCart();
+      renderCart();
+    }
     setCheckoutReceiptLinks(result);
+    setCheckoutSuccess(lastCheckoutOrder);
     checkoutNote.textContent = "Bill ToyyibPay berjaya. Jika halaman bayaran tidak terbuka, tekan pautan ToyyibPay di bawah.";
     window.setTimeout(() => {
       window.location.assign(result.checkoutUrl);
