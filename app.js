@@ -328,10 +328,17 @@ function updateAccountUi() {
     : "Dashboard pengguna";
   if (currentUser && profileForm && walletForm) {
     profileForm.elements.name.value = currentUser.name || "";
+    profileForm.elements.email.value = currentUser.email || "";
     profileForm.elements.phone.value = currentUser.phone || "";
+    profileForm.elements.mobile_phone.value = currentUser.mobile_phone || "";
+    profileForm.elements.address.value = currentUser.address || "";
+    profileForm.elements.avatar_url.value = currentUser.avatar_url || "";
     walletForm.elements.wallet_crypto.value = currentUser.wallet_crypto || "";
     walletForm.elements.wallet_cash.value = currentUser.wallet_cash || "";
     walletForm.elements.luno_wallet.value = currentUser.luno_wallet || "";
+    walletForm.elements.bank_name.value = currentUser.bank_name || "";
+    walletForm.elements.bank_account_name.value = currentUser.bank_account_name || "";
+    walletForm.elements.bank_account_number.value = currentUser.bank_account_number || "";
   }
   roleCards.forEach((card) => {
     const role = card.dataset.roleCard;
@@ -1001,10 +1008,17 @@ profileForm.addEventListener("submit", async (event) => {
       method: "PATCH",
       body: JSON.stringify({
         name: data.get("name"),
+        email: data.get("email"),
         phone: data.get("phone"),
+        mobile_phone: data.get("mobile_phone"),
+        address: data.get("address"),
+        avatar_url: data.get("avatar_url"),
         wallet_crypto: currentUser.wallet_crypto,
         wallet_cash: currentUser.wallet_cash,
         luno_wallet: currentUser.luno_wallet,
+        bank_name: currentUser.bank_name,
+        bank_account_name: currentUser.bank_account_name,
+        bank_account_number: currentUser.bank_account_number,
       }),
     });
     currentUser = result.user;
@@ -1028,10 +1042,17 @@ walletForm.addEventListener("submit", async (event) => {
       method: "PATCH",
       body: JSON.stringify({
         name: currentUser.name,
+        email: currentUser.email,
         phone: currentUser.phone,
+        mobile_phone: currentUser.mobile_phone,
+        address: currentUser.address,
+        avatar_url: currentUser.avatar_url,
         wallet_crypto: data.get("wallet_crypto"),
         wallet_cash: data.get("wallet_cash"),
         luno_wallet: data.get("luno_wallet"),
+        bank_name: data.get("bank_name"),
+        bank_account_name: data.get("bank_account_name"),
+        bank_account_number: data.get("bank_account_number"),
       }),
     });
     currentUser = result.user;
@@ -1053,6 +1074,15 @@ heroDots.addEventListener("click", (event) => {
 
 roleTools.forEach((button) => {
   button.addEventListener("click", () => showPage(button.dataset.page));
+});
+
+document.querySelectorAll(".dashboard-jump").forEach((link) => {
+  link.addEventListener("click", (event) => {
+    event.preventDefault();
+    showPage("dashboard");
+    const target = document.querySelector(link.getAttribute("href"));
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 });
 
 newsForm.addEventListener("submit", async (event) => {

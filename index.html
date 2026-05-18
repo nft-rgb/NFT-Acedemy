@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=4.2.0" />
+    <link rel="stylesheet" href="styles.css?v=4.3.0" />
   </head>
   <body>
     <header class="topbar">
@@ -685,12 +685,12 @@
             </a>
             <p class="sidebar-kicker">Portal Pengurusan</p>
             <nav class="portal-menu" aria-label="Portal tools">
-              <a class="active" href="#dashboard" data-page="dashboard">Pengurusan Foto</a>
-              <a href="#dashboard" data-page="dashboard">Semakan Keaslian</a>
-              <a href="#checkout" data-page="checkout">Pembayaran</a>
-              <a href="#mint" data-page="mint">Asset Photo</a>
-              <a href="#news" data-page="news">Post News</a>
-              <a href="#security" data-page="security">Security</a>
+              <a class="active dashboard-jump" href="#dashboard-overview">Overview</a>
+              <a class="dashboard-jump" href="#dashboard-profile">Profile</a>
+              <a class="dashboard-jump" href="#dashboard-finance">Finance</a>
+              <a class="dashboard-jump" href="#dashboard-news">News</a>
+              <a class="dashboard-jump" href="#dashboard-assets">Assets</a>
+              <a class="dashboard-jump" href="#dashboard-system">System</a>
             </nav>
             <div class="portal-account">
               <span id="roleBadge">Guest</span>
@@ -721,9 +721,25 @@
                 <h2 id="roleDashboardTitle">Dashboard pengguna</h2>
                 <p>Urus content, asset photo, user, wallet, news dan semakan keaslian dalam satu panel.</p>
               </div>
-              <a class="primary-action" href="#news" data-page="news">Post News</a>
+              <a class="primary-action dashboard-jump" href="#dashboard-news">Urus News</a>
             </div>
 
+            <div class="dashboard-module-nav" aria-label="Dashboard modules">
+              <a href="#dashboard-overview" class="dashboard-jump">Overview</a>
+              <a href="#dashboard-profile" class="dashboard-jump">Profile</a>
+              <a href="#dashboard-finance" class="dashboard-jump">Finance</a>
+              <a href="#dashboard-news" class="dashboard-jump">News</a>
+              <a href="#dashboard-assets" class="dashboard-jump">Photo</a>
+              <a href="#dashboard-system" class="dashboard-jump">System</a>
+            </div>
+
+            <section class="dashboard-module" id="dashboard-overview">
+            <div class="module-title">
+              <div>
+                <p class="eyebrow">Overview</p>
+                <h3>Ringkasan prestasi platform</h3>
+              </div>
+            </div>
             <div class="dashboard-grid">
               <article>
                 <span class="metric-label">Revenue</span>
@@ -752,30 +768,47 @@
               <article><span>Creator Payout</span><strong id="salesPayoutMetric">RM 0.00</strong></article>
               <article><span>Listing Fee</span><strong id="listingFeeMyrMetric">RM 2.00</strong></article>
             </div>
+            </section>
 
-            <div class="role-dashboard">
+            <section class="dashboard-module role-dashboard" id="dashboard-profile">
               <div class="role-panel-heading">
                 <div>
-                  <p class="eyebrow">Account control</p>
-                  <h3>Panel user, admin dan super admin</h3>
+                  <p class="eyebrow">Profile settings</p>
+                  <h3>Profile pengguna dan maklumat akaun</h3>
                 </div>
               </div>
               <div class="role-dashboard-grid">
             <form class="settings-form" id="profileForm">
               <h3>Update profile</h3>
               <label>
+                Gambar profile
+                <input name="avatar_url" type="url" placeholder="URL gambar profile" />
+              </label>
+              <label>
                 Nama
                 <input name="name" type="text" placeholder="Nama akaun" />
+              </label>
+              <label>
+                Email
+                <input name="email" type="email" placeholder="email@domain.com" />
               </label>
               <label>
                 Telefon
                 <input name="phone" type="tel" placeholder="0100000000" />
               </label>
+              <label>
+                Mobile phone
+                <input name="mobile_phone" type="tel" placeholder="60123456789" />
+              </label>
+              <label>
+                Alamat tempat tinggal
+                <textarea name="address" rows="3" placeholder="Alamat penuh"></textarea>
+              </label>
               <button class="primary-action" type="submit">Save profile</button>
               <p class="form-note" id="profileNote" role="status"></p>
             </form>
             <form class="settings-form" id="walletForm">
-              <h3>Wallet crypto & cash</h3>
+              <h3>Finance profile</h3>
               <label>
                 Wallet crypto
                 <input name="wallet_crypto" type="text" placeholder="0x... / LUNO wallet reference" />
@@ -788,7 +821,19 @@
                 LUNO wallet
                 <input name="luno_wallet" type="text" placeholder="LUNO BTC/ETH wallet label" />
               </label>
-              <button class="primary-action" type="submit">Save wallet</button>
+              <label>
+                Nama bank
+                <input name="bank_name" type="text" placeholder="Maybank / CIMB / Bank Islam" />
+              </label>
+              <label>
+                Nama pemilik akaun
+                <input name="bank_account_name" type="text" placeholder="Nama seperti akaun bank" />
+              </label>
+              <label>
+                No. akaun bank
+                <input name="bank_account_number" type="text" placeholder="1234567890" />
+              </label>
+              <button class="primary-action" type="submit">Save finance</button>
               <p class="form-note" id="walletNote" role="status"></p>
             </form>
             <article class="crypto-panel">
@@ -804,6 +849,33 @@
               <a class="luno-link" href="https://www.luno.com/en/my" target="_blank" rel="noreferrer">Buka LUNO Malaysia</a>
             </article>
           </div>
+            </section>
+
+          <section class="dashboard-module" id="dashboard-finance">
+            <div class="module-title">
+              <div>
+                <p class="eyebrow">Finance</p>
+                <h3>Laporan kewangan dan payment gateway</h3>
+              </div>
+            </div>
+            <div class="finance-module-grid">
+              <article class="finance-card">
+                <span>Payment gateway</span>
+                <strong>ToyyibPay</strong>
+                <p>Checkout MYR menggunakan ToyyibPay. Bill dan callback direkod sebagai order platform.</p>
+              </article>
+              <article class="finance-card">
+                <span>Platform charge</span>
+                <strong>6%</strong>
+                <p>Service fee platform daripada jualan foto.</p>
+              </article>
+              <article class="finance-card">
+                <span>Listing fee</span>
+                <strong>RM 2.00</strong>
+                <p>Charge listing marketplace bagi setiap foto.</p>
+              </article>
+            </div>
+          </section>
           <div class="role-tools">
             <button type="button" data-page="mint">Asset photo</button>
             <button type="button" data-page="checkout">Wallet cash</button>
@@ -842,7 +914,7 @@
               </div>
             </article>
           </div>
-          <form class="scan-panel" id="scanForm">
+          <form class="scan-panel dashboard-module" id="scanForm">
             <div>
               <p class="eyebrow">Photo authenticity</p>
               <h3>Scan kod keaslian foto</h3>
@@ -855,8 +927,8 @@
             <button class="primary-action" type="submit">Scan photo</button>
             <p class="form-note" id="scanNote" role="status"></p>
           </form>
-          <div class="management-grid">
-            <section class="management-card" data-role-card="user">
+          <div class="management-grid" id="dashboard-assets">
+            <section class="management-card dashboard-module" data-role-card="user">
               <div class="table-heading">
                 <h3>My listing & pricing</h3>
                 <span>Update harga sebelum/selepas listing</span>
@@ -864,7 +936,7 @@
               <div class="management-list" id="myListingList"></div>
             </section>
 
-            <section class="management-card" data-role-card="admin">
+            <section class="management-card dashboard-module" data-role-card="admin">
               <div class="table-heading">
                 <h3>Photo approval</h3>
                 <button class="secondary-action" id="refreshCmsButton" type="button">Refresh data</button>
@@ -872,7 +944,7 @@
               <div class="management-list" id="portalPhotoList"></div>
             </section>
 
-            <section class="management-card" data-role-card="super_admin">
+            <section class="management-card dashboard-module" id="dashboard-system" data-role-card="super_admin">
               <div class="table-heading">
                 <h3>User, admin & super admin</h3>
                 <span>Super admin only</span>
@@ -892,7 +964,7 @@
               <div class="management-list" id="portalUserList"></div>
             </section>
 
-            <section class="management-card" data-role-card="admin">
+            <section class="management-card dashboard-module" data-role-card="admin">
               <div class="table-heading">
                 <h3>Orders & payment</h3>
                 <span>ToyyibPay / wallet</span>
@@ -900,7 +972,7 @@
               <div class="management-list" id="portalOrderList"></div>
             </section>
 
-            <section class="management-card news-manager-card" data-role-card="admin">
+            <section class="management-card news-manager-card dashboard-module" id="dashboard-news" data-role-card="admin">
               <div class="table-heading">
                 <div>
                   <h3>News management</h3>
@@ -1127,6 +1199,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=4.2.0"></script>
+    <script src="app.js?v=4.3.0"></script>
   </body>
 </html>

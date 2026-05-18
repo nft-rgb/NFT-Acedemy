@@ -198,9 +198,15 @@ function publicUser(user) {
     role: user.role,
     status: user.status,
     phone: user.phone || "",
+    avatar_url: user.avatar_url || "",
+    address: user.address || "",
+    mobile_phone: user.mobile_phone || "",
     wallet_crypto: user.wallet_crypto || "",
     wallet_cash: user.wallet_cash || "",
     luno_wallet: user.luno_wallet || "",
+    bank_name: user.bank_name || "",
+    bank_account_name: user.bank_account_name || "",
+    bank_account_number: user.bank_account_number || "",
     preferred_currency: user.preferred_currency || "MYR",
     email_verified: Boolean(user.email_verified || user.role === "admin" || user.role === "super_admin"),
   };
@@ -493,7 +499,21 @@ function createLocalStore() {
     async updateUserProfile(id, input) {
       const user = data.users.find((item) => item.id === Number(id));
       if (!user) return null;
-      ["name", "phone", "wallet_crypto", "wallet_cash", "luno_wallet", "preferred_currency"].forEach((key) => {
+      [
+        "name",
+        "email",
+        "phone",
+        "mobile_phone",
+        "address",
+        "avatar_url",
+        "wallet_crypto",
+        "wallet_cash",
+        "luno_wallet",
+        "bank_name",
+        "bank_account_name",
+        "bank_account_number",
+        "preferred_currency",
+      ].forEach((key) => {
         if (input[key] !== undefined) user[key] = String(input[key] || "").trim();
       });
       saveLocalData(data);
@@ -687,6 +707,12 @@ async function ensureUserColumns(pool) {
     ["wallet_crypto", "VARCHAR(190) NULL"],
     ["wallet_cash", "VARCHAR(190) NULL"],
     ["luno_wallet", "VARCHAR(190) NULL"],
+    ["avatar_url", "TEXT NULL"],
+    ["address", "TEXT NULL"],
+    ["mobile_phone", "VARCHAR(40) NULL"],
+    ["bank_name", "VARCHAR(120) NULL"],
+    ["bank_account_name", "VARCHAR(160) NULL"],
+    ["bank_account_number", "VARCHAR(80) NULL"],
     ["preferred_currency", "VARCHAR(12) NOT NULL DEFAULT 'MYR'"],
     ["email_verified", "TINYINT(1) NOT NULL DEFAULT 0"],
     ["email_verified_at", "TIMESTAMP NULL"],
@@ -865,7 +891,7 @@ function createMysqlStore(pool) {
     },
     async listUsers() {
       const [rows] = await pool.execute(
-        "SELECT id, name, email, role, status, phone, wallet_crypto, wallet_cash, luno_wallet, preferred_currency, email_verified, created_at FROM users ORDER BY id DESC",
+        "SELECT id, name, email, role, status, phone, mobile_phone, address, avatar_url, wallet_crypto, wallet_cash, luno_wallet, bank_name, bank_account_name, bank_account_number, preferred_currency, email_verified, created_at FROM users ORDER BY id DESC",
       );
       return rows;
     },
@@ -897,13 +923,20 @@ function createMysqlStore(pool) {
     },
     async updateUserProfile(id, input) {
       await pool.execute(
-        "UPDATE users SET name = COALESCE(?, name), phone = ?, wallet_crypto = ?, wallet_cash = ?, luno_wallet = ?, preferred_currency = ? WHERE id = ?",
+        "UPDATE users SET name = COALESCE(?, name), email = COALESCE(?, email), phone = ?, mobile_phone = ?, address = ?, avatar_url = ?, wallet_crypto = ?, wallet_cash = ?, luno_wallet = ?, bank_name = ?, bank_account_name = ?, bank_account_number = ?, preferred_currency = ? WHERE id = ?",
         [
           input.name || null,
+          input.email || null,
           input.phone || "",
+          input.mobile_phone || "",
+          input.address || "",
+          input.avatar_url || "",
           input.wallet_crypto || "",
           input.wallet_cash || "",
           input.luno_wallet || "",
+          input.bank_name || "",
+          input.bank_account_name || "",
+          input.bank_account_number || "",
           input.preferred_currency || "MYR",
           id,
         ],
@@ -1354,10 +1387,17 @@ async function handleApi(req, res, pathname) {
     const payload = await readJson(req);
     const updated = await db.updateUserProfile(user.id, {
       name: payload.name,
+      email: payload.email,
       phone: payload.phone,
+      mobile_phone: payload.mobile_phone,
+      address: payload.address,
+      avatar_url: payload.avatar_url,
       wallet_crypto: payload.wallet_crypto,
       wallet_cash: payload.wallet_cash,
       luno_wallet: payload.luno_wallet,
+      bank_name: payload.bank_name,
+      bank_account_name: payload.bank_account_name,
+      bank_account_number: payload.bank_account_number,
       preferred_currency: payload.preferred_currency || "MYR",
     });
     sendJson(res, 200, { user: publicUser(updated) });

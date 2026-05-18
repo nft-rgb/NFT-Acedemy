@@ -1331,7 +1331,9 @@ h2 {
   font-weight: 700;
 }
 
-.settings-form input {
+.settings-form input,
+.settings-form textarea,
+.settings-form select {
   min-height: 46px;
   width: 100%;
   padding: 0 13px;
@@ -1339,6 +1341,12 @@ h2 {
   border-radius: 8px;
   background: var(--surface);
   color: var(--text);
+}
+
+.settings-form textarea {
+  min-height: 92px;
+  padding-top: 12px;
+  resize: vertical;
 }
 
 .table-heading {
@@ -2420,7 +2428,7 @@ th {
 .portal-main {
   display: grid;
   align-content: start;
-  gap: 22px;
+  gap: 18px;
   padding: 20px clamp(16px, 3.5vw, 44px) 48px;
 }
 
@@ -2518,6 +2526,89 @@ th {
   margin-top: 0;
   border-radius: 14px;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+.dashboard-module {
+  scroll-margin-top: 96px;
+}
+
+.dashboard-module-nav {
+  position: sticky;
+  top: 76px;
+  z-index: 8;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(14px);
+}
+
+.dashboard-module-nav a {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 12px;
+  color: #475569;
+  font-weight: 900;
+}
+
+.dashboard-module-nav a:hover {
+  background: #eef2ff;
+  color: #010066;
+}
+
+.module-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.module-title h3 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.finance-module-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.finance-card {
+  display: grid;
+  gap: 10px;
+  min-height: 150px;
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: white;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.finance-card span {
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.finance-card strong {
+  color: #010066;
+  font-size: 1.5rem;
+}
+
+.finance-card p {
+  margin: 0;
+  color: #64748b;
+  line-height: 1.55;
 }
 
 .auth-page.page-section {
@@ -3032,7 +3123,8 @@ th {
   .management-grid,
   .cart-layout,
   .sales-strip,
-  .news-feed {
+  .news-feed,
+  .finance-module-grid {
     grid-template-columns: 1fr;
   }
 
