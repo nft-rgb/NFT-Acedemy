@@ -1577,19 +1577,14 @@ th {
   box-shadow: var(--shadow);
 }
 
-.news-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
-  gap: 18px;
-  align-items: start;
-}
-
 .news-feed {
   display: grid;
-  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
 }
 
 .news-card,
+.news-side-note,
 .news-composer {
   display: grid;
   gap: 10px;
@@ -1597,6 +1592,23 @@ th {
   border: 1px solid var(--line);
   border-radius: 18px;
   background: var(--surface);
+}
+
+.news-card {
+  overflow: hidden;
+  padding: 0;
+}
+
+.news-card img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+
+.news-card-body {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
 }
 
 .news-card span {
@@ -1616,6 +1628,40 @@ th {
   line-height: 1.6;
 }
 
+.news-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.news-share {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.news-share a {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #010066;
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.news-side-note {
+  margin-top: 18px;
+  background: #f8fafc;
+}
+
+.news-side-note span {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
 .news-composer label {
   display: grid;
   gap: 7px;
@@ -1625,11 +1671,27 @@ th {
 }
 
 .news-composer input,
+.news-composer select,
 .news-composer textarea {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px 13px;
+}
+
+.news-manager-card {
+  grid-column: 1 / -1;
+}
+
+.news-admin-list .manager-row {
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+}
+
+.news-admin-list img {
+  width: 88px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 10px;
 }
 
 .auth-close {
@@ -1882,6 +1944,10 @@ th {
 
   .news-layout {
     grid-template-columns: 1fr;
+  }
+
+  .news-feed {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .collection-row {
@@ -2965,7 +3031,8 @@ th {
   .portal-workspace,
   .management-grid,
   .cart-layout,
-  .sales-strip {
+  .sales-strip,
+  .news-feed {
     grid-template-columns: 1fr;
   }
 

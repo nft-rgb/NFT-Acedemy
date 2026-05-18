@@ -267,6 +267,15 @@ function makePerceptualHash(value) {
   return crypto.createHash("sha256").update(String(value || "")).digest("hex");
 }
 
+function makeSlug(value) {
+  const base = String(value || "photora-news")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 160);
+  return `${base || "photora-news"}-${crypto.randomBytes(3).toString("hex")}`;
+}
+
 function createSession(user) {
   const token = crypto
     .createHmac("sha256", config.sessionSecret)
@@ -313,6 +322,10 @@ function loadLocalData() {
         id: 1,
         author_id: 1,
         title: "Photora portal kini menyokong photo authenticity scan",
+        slug: makeSlug("Photora portal kini menyokong photo authenticity scan"),
+        category: "Platform",
+        excerpt: "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
+        image_url: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80",
         body: "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
         status: "published",
         created_at: new Date().toISOString(),
@@ -330,6 +343,12 @@ function loadLocalData() {
     data.auth_tokens ||= [];
     data.users.forEach((user) => {
       if (user.email_verified === undefined) user.email_verified = user.role === "admin" || user.role === "super_admin";
+    });
+    data.news.forEach((post) => {
+      post.slug ||= makeSlug(post.title);
+      post.category ||= "Platform";
+      post.excerpt ||= String(post.body || "").slice(0, 140);
+      post.image_url ||= "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80";
     });
     const superAdmin = data.users.find((user) => user.role === "super_admin");
     if (superAdmin && superAdmin.email !== config.superAdminEmail) {
@@ -372,6 +391,10 @@ function loadLocalData() {
         id: 1,
         author_id: 1,
         title: "Photora portal kini menyokong photo authenticity scan",
+        slug: makeSlug("Photora portal kini menyokong photo authenticity scan"),
+        category: "Platform",
+        excerpt: "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
+        image_url: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80",
         body: "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
         status: "published",
         created_at: new Date().toISOString(),
@@ -582,21 +605,44 @@ function createLocalStore() {
         listing_fee_myr: marketplaceDefaults.listingFeeMyr,
       };
     },
-    async listNews() {
-      return data.news.filter((post) => post.status === "published").sort((a, b) => b.id - a.id);
+    async listNews({ includeDrafts = false } = {}) {
+      return data.news.filter((post) => includeDrafts || post.status === "published").sort((a, b) => b.id - a.id);
     },
     async createNews(input, user) {
       const post = {
         id: (data.counters.news = (data.counters.news || data.news.length || 0) + 1),
         author_id: user.id,
         title: input.title,
+        slug: makeSlug(input.title),
+        category: input.category || "Platform",
+        excerpt: input.excerpt || String(input.body || "").slice(0, 150),
+        image_url: input.image_url || "",
         body: input.body,
-        status: "published",
+        status: input.status === "draft" ? "draft" : "published",
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
       data.news.unshift(post);
       saveLocalData(data);
       return post;
+    },
+    async updateNews(id, input) {
+      const post = data.news.find((item) => Number(item.id) === Number(id));
+      if (!post) return null;
+      ["title", "category", "excerpt", "image_url", "body", "status"].forEach((key) => {
+        if (input[key] !== undefined) post[key] = input[key];
+      });
+      if (input.title) post.slug = post.slug || makeSlug(input.title);
+      post.updated_at = new Date().toISOString();
+      saveLocalData(data);
+      return post;
+    },
+    async deleteNews(id) {
+      const index = data.news.findIndex((item) => Number(item.id) === Number(id));
+      if (index === -1) return false;
+      data.news.splice(index, 1);
+      saveLocalData(data);
+      return true;
     },
     async listSlides({ includeInactive = false } = {}) {
       return data.slides
@@ -677,6 +723,25 @@ async function ensureUserColumns(pool) {
       if (error.code !== "ER_DUP_FIELDNAME") throw error;
     }
   }
+  const newsColumns = [
+    ["slug", "VARCHAR(200) NULL UNIQUE"],
+    ["category", "VARCHAR(80) NOT NULL DEFAULT 'Platform'"],
+    ["excerpt", "VARCHAR(255) NULL"],
+    ["image_url", "TEXT NULL"],
+    ["updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"],
+  ];
+  for (const [column, definition] of newsColumns) {
+    try {
+      await pool.query(`ALTER TABLE news_posts ADD COLUMN ${column} ${definition}`);
+    } catch (error) {
+      if (!["ER_DUP_FIELDNAME", "ER_DUP_KEYNAME"].includes(error.code)) throw error;
+    }
+  }
+  try {
+    await pool.query("CREATE INDEX idx_news_category ON news_posts(category)");
+  } catch (error) {
+    if (error.code !== "ER_DUP_KEYNAME") throw error;
+  }
 }
 
 async function backfillPhotoAuthenticity(pool) {
@@ -694,9 +759,13 @@ async function seedNews(pool) {
   const [rows] = await pool.execute("SELECT id FROM news_posts LIMIT 1");
   if (rows.length > 0) return;
   const [users] = await pool.execute("SELECT id FROM users WHERE role = 'super_admin' ORDER BY id ASC LIMIT 1");
-  await pool.execute("INSERT INTO news_posts (author_id, title, body, status) VALUES (?, ?, ?, 'published')", [
+  await pool.execute("INSERT INTO news_posts (author_id, title, slug, category, excerpt, image_url, body, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'published')", [
     users[0]?.id || null,
     "Photora portal kini menyokong photo authenticity scan",
+    makeSlug("Photora portal kini menyokong photo authenticity scan"),
+    "Platform",
+    "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
+    "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80",
     "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
   ]);
 }
@@ -735,7 +804,7 @@ function createMysqlStore(pool) {
         try {
           await pool.query(statement);
         } catch (error) {
-          if (error.code !== "ER_DUP_KEYNAME") throw error;
+          if (!["ER_DUP_KEYNAME", "ER_KEY_COLUMN_DOES_NOT_EXITS"].includes(error.code)) throw error;
         }
       }
       await ensureUserColumns(pool);
@@ -950,18 +1019,46 @@ function createMysqlStore(pool) {
         listing_fee_myr: marketplaceDefaults.listingFeeMyr,
       };
     },
-    async listNews() {
-      const [rows] = await pool.execute("SELECT news_posts.*, users.name AS author_name FROM news_posts LEFT JOIN users ON users.id = news_posts.author_id WHERE news_posts.status = 'published' ORDER BY news_posts.id DESC");
+    async listNews({ includeDrafts = false } = {}) {
+      const sql = includeDrafts
+        ? "SELECT news_posts.*, users.name AS author_name FROM news_posts LEFT JOIN users ON users.id = news_posts.author_id ORDER BY news_posts.id DESC"
+        : "SELECT news_posts.*, users.name AS author_name FROM news_posts LEFT JOIN users ON users.id = news_posts.author_id WHERE news_posts.status = 'published' ORDER BY news_posts.id DESC";
+      const [rows] = await pool.execute(sql);
       return rows;
     },
     async createNews(input, user) {
-      const [result] = await pool.execute("INSERT INTO news_posts (author_id, title, body, status) VALUES (?, ?, ?, 'published')", [
+      const [result] = await pool.execute("INSERT INTO news_posts (author_id, title, slug, category, excerpt, image_url, body, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [
         user.id,
         input.title,
+        makeSlug(input.title),
+        input.category || "Platform",
+        input.excerpt || String(input.body || "").slice(0, 150),
+        input.image_url || "",
         input.body,
+        input.status === "draft" ? "draft" : "published",
       ]);
       const [rows] = await pool.execute("SELECT * FROM news_posts WHERE id = ? LIMIT 1", [result.insertId]);
       return rows[0] || null;
+    },
+    async updateNews(id, input) {
+      await pool.execute(
+        "UPDATE news_posts SET title = COALESCE(?, title), category = COALESCE(?, category), excerpt = COALESCE(?, excerpt), image_url = COALESCE(?, image_url), body = COALESCE(?, body), status = COALESCE(?, status) WHERE id = ?",
+        [
+          input.title || null,
+          input.category || null,
+          input.excerpt ?? null,
+          input.image_url ?? null,
+          input.body || null,
+          input.status || null,
+          id,
+        ],
+      );
+      const [rows] = await pool.execute("SELECT * FROM news_posts WHERE id = ? LIMIT 1", [id]);
+      return rows[0] || null;
+    },
+    async deleteNews(id) {
+      const [result] = await pool.execute("DELETE FROM news_posts WHERE id = ?", [id]);
+      return result.affectedRows > 0;
     },
     async listSlides({ includeInactive = false } = {}) {
       const sql = includeInactive
@@ -1301,7 +1398,17 @@ async function handleApi(req, res, pathname) {
     return true;
   }
 
-  if (req.method === "POST" && pathname === "/api/news") {
+  if (req.method === "GET" && pathname === "/api/cms/news") {
+    const user = await currentUser(req);
+    if (!requireRole(user, ["admin", "super_admin"])) {
+      sendJson(res, 403, { error: "Admin access required." });
+      return true;
+    }
+    sendJson(res, 200, { posts: await db.listNews({ includeDrafts: true }) });
+    return true;
+  }
+
+  if (req.method === "POST" && (pathname === "/api/news" || pathname === "/api/cms/news")) {
     const user = await currentUser(req);
     if (!requireRole(user, ["admin", "super_admin"])) {
       sendJson(res, 403, { error: "Admin access required." });
@@ -1313,6 +1420,32 @@ async function handleApi(req, res, pathname) {
       return true;
     }
     sendJson(res, 201, { post: await db.createNews(payload, user) });
+    return true;
+  }
+
+  const newsMatch = pathname.match(/^\/api\/cms\/news\/(\d+)$/);
+  if (newsMatch && req.method === "PATCH") {
+    const user = await currentUser(req);
+    if (!requireRole(user, ["admin", "super_admin"])) {
+      sendJson(res, 403, { error: "Admin access required." });
+      return true;
+    }
+    const payload = await readJson(req);
+    if (payload.status && !["published", "draft"].includes(payload.status)) {
+      sendJson(res, 400, { error: "Invalid news status." });
+      return true;
+    }
+    sendJson(res, 200, { post: await db.updateNews(newsMatch[1], payload) });
+    return true;
+  }
+
+  if (newsMatch && req.method === "DELETE") {
+    const user = await currentUser(req);
+    if (!requireRole(user, ["admin", "super_admin"])) {
+      sendJson(res, 403, { error: "Admin access required." });
+      return true;
+    }
+    sendJson(res, 200, { ok: await db.deleteNews(newsMatch[1]) });
     return true;
   }
 

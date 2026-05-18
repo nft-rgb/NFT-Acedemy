@@ -72,13 +72,19 @@ CREATE TABLE IF NOT EXISTS news_posts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   author_id INT NULL,
   title VARCHAR(180) NOT NULL,
+  slug VARCHAR(200) NULL UNIQUE,
+  category VARCHAR(80) NOT NULL DEFAULT 'Platform',
+  excerpt VARCHAR(255) NULL,
+  image_url TEXT NULL,
   body TEXT NOT NULL,
   status ENUM('published', 'draft') NOT NULL DEFAULT 'published',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 CREATE INDEX idx_news_status ON news_posts(status);
+CREATE INDEX idx_news_category ON news_posts(category);
 
 CREATE TABLE IF NOT EXISTS hero_slides (
   id INT AUTO_INCREMENT PRIMARY KEY,

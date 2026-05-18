@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=4.1.1" />
+    <link rel="stylesheet" href="styles.css?v=4.2.0" />
   </head>
   <body>
     <header class="topbar">
@@ -536,20 +536,11 @@
         </div>
         <div class="news-layout">
           <div class="news-feed" id="newsFeed" aria-live="polite"></div>
-          <form class="news-composer admin-only" id="newsForm">
-            <p class="eyebrow">Admin post</p>
-            <h3>Post news</h3>
-            <label>
-              Tajuk
-              <input name="title" type="text" placeholder="Contoh: Verified campus drop dibuka" required />
-            </label>
-            <label>
-              Kandungan
-              <textarea name="body" rows="5" placeholder="Tulis pengumuman platform..." required></textarea>
-            </label>
-            <button class="primary-action full" type="submit">Publish news</button>
-            <p class="form-note" id="newsNote" role="status"></p>
-          </form>
+          <aside class="news-side-note">
+            <span>Share updates</span>
+            <strong>Berita rasmi Photora</strong>
+            <p>Pengunjung hanya melihat artikel yang telah diterbitkan oleh admin atau super admin.</p>
+          </aside>
         </div>
       </section>
 
@@ -909,6 +900,65 @@
               <div class="management-list" id="portalOrderList"></div>
             </section>
 
+            <section class="management-card news-manager-card" data-role-card="admin">
+              <div class="table-heading">
+                <div>
+                  <h3>News management</h3>
+                  <span>Create, update, delete dan kategori news</span>
+                </div>
+                <button class="secondary-action" id="newNewsButton" type="button">New post</button>
+              </div>
+              <form class="news-composer" id="newsForm">
+                <input name="id" type="hidden" />
+                <div class="form-row">
+                  <label>
+                    Tajuk
+                    <input name="title" type="text" placeholder="Contoh: Verified campus drop dibuka" required />
+                  </label>
+                  <label>
+                    Kategori
+                    <input name="category" type="text" list="newsCategories" placeholder="Platform" required />
+                    <datalist id="newsCategories">
+                      <option value="Platform"></option>
+                      <option value="Marketplace"></option>
+                      <option value="NFT Drop"></option>
+                      <option value="Creator"></option>
+                      <option value="Security"></option>
+                      <option value="POLYCC"></option>
+                    </datalist>
+                  </label>
+                </div>
+                <label>
+                  Ringkasan
+                  <input name="excerpt" type="text" placeholder="Intro pendek untuk kad news" />
+                </label>
+                <label>
+                  Gambar news
+                  <input name="image_url" type="url" placeholder="Image URL atau upload gambar di bawah" />
+                </label>
+                <label>
+                  Upload gambar
+                  <input name="image_file" type="file" accept="image/*" />
+                </label>
+                <label>
+                  Editor news
+                  <textarea name="body" rows="8" placeholder="Tulis artikel news seperti WordPress editor..." required></textarea>
+                </label>
+                <div class="form-row">
+                  <label>
+                    Status
+                    <select name="status">
+                      <option value="published">Published</option>
+                      <option value="draft">Draft</option>
+                    </select>
+                  </label>
+                  <button class="primary-action full" type="submit">Publish news</button>
+                </div>
+                <p class="form-note" id="newsNote" role="status"></p>
+              </form>
+              <div class="management-list news-admin-list" id="portalNewsList"></div>
+            </section>
+
             <section class="management-card" data-role-card="admin">
               <div class="table-heading">
                 <h3>Hero slider</h3>
@@ -1077,6 +1127,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=4.1.1"></script>
+    <script src="app.js?v=4.2.0"></script>
   </body>
 </html>

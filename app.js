@@ -172,6 +172,8 @@ const scanNote = document.querySelector("#scanNote");
 const newsFeed = document.querySelector("#newsFeed");
 const newsForm = document.querySelector("#newsForm");
 const newsNote = document.querySelector("#newsNote");
+const portalNewsList = document.querySelector("#portalNewsList");
+const newNewsButton = document.querySelector("#newNewsButton");
 const accountTypeButtons = document.querySelectorAll(".account-type-toggle button");
 const heroSection = document.querySelector(".hero");
 const heroEyebrow = document.querySelector("#heroEyebrow");
@@ -211,6 +213,7 @@ let heroSlides = [];
 let activeSlideIndex = 0;
 let slideTimer = null;
 let ethToMyr = 15000;
+let managedNewsPosts = [];
 let cartItems = JSON.parse(localStorage.getItem("photoraCart") || "[]");
 const transactions = [
   { item: "Konvo Seri Gemilang #018", buyer: "0x92B4...A81D", payment: "Wallet", gross: 0.42, type: "primary" },
@@ -242,6 +245,19 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) {
+      resolve("");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Gambar news tidak dapat dibaca."));
+    reader.readAsDataURL(file);
+  });
 }
 
 function showToast(message) {
@@ -399,7 +415,27 @@ async function loadNews() {
     newsFeed.innerHTML = posts.length
       ? posts
           .map(
-            (post) => `<article class="news-card"><span>${new Date(post.created_at).toLocaleDateString("ms-MY")}</span><h3>${post.title}</h3><p>${post.body}</p></article>`,
+            (post) => {
+              const shareUrl = encodeURIComponent(`${location.origin}${location.pathname}#news-${post.slug || post.id}`);
+              const shareText = encodeURIComponent(post.title);
+              return `<article class="news-card" id="news-${escapeHtml(post.slug || post.id)}">
+                <img src="${escapeHtml(post.image_url || "assets/photoralogo.png")}" alt="" />
+                <div class="news-card-body">
+                  <div class="news-meta">
+                    <span>${escapeHtml(post.category || "Platform")}</span>
+                    <span>${new Date(post.created_at).toLocaleDateString("ms-MY")}</span>
+                  </div>
+                  <h3>${escapeHtml(post.title)}</h3>
+                  <p>${escapeHtml(post.excerpt || post.body)}</p>
+                  <div class="news-share" aria-label="Share news">
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noreferrer">Facebook</a>
+                    <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}" target="_blank" rel="noreferrer">X</a>
+                    <a href="https://api.whatsapp.com/send?text=${shareText}%20${shareUrl}" target="_blank" rel="noreferrer">WhatsApp</a>
+                    <a href="https://t.me/share/url?url=${shareUrl}&text=${shareText}" target="_blank" rel="noreferrer">Telegram</a>
+                  </div>
+                </div>
+              </article>`;
+            },
           )
           .join("")
       : '<p class="empty-state">Belum ada news platform.</p>';
@@ -538,6 +574,30 @@ function renderSlideList(slides = heroSlides) {
     : '<p class="empty-state">Belum ada slider.</p>';
 }
 
+function renderNewsManager(posts = []) {
+  if (!portalNewsList) return;
+  portalNewsList.innerHTML = posts.length
+    ? posts
+        .map(
+          (post) => `
+            <div class="manager-row compact" data-news-row="${post.id}">
+              <img src="${escapeHtml(post.image_url || "assets/photoralogo.png")}" alt="" />
+              <div>
+                <strong>${escapeHtml(post.title)}</strong>
+                <span>${escapeHtml(post.category || "Platform")} · ${escapeHtml(post.status || "published")} · ${new Date(post.created_at).toLocaleDateString("ms-MY")}</span>
+                <small>${escapeHtml(post.excerpt || String(post.body || "").slice(0, 120))}</small>
+              </div>
+              <div class="manager-actions">
+                <button type="button" data-news-edit="${post.id}">Edit</button>
+                <button type="button" data-news-delete="${post.id}">Delete</button>
+              </div>
+            </div>
+          `,
+        )
+        .join("")
+    : '<p class="empty-state">Belum ada news untuk diurus.</p>';
+}
+
 async function loadCmsData() {
   if (!currentUser) {
     renderPhotoManager([]);
@@ -545,6 +605,7 @@ async function loadCmsData() {
     renderUserManager([]);
     renderOrderManager([]);
     renderSlideList(heroSlides);
+    renderNewsManager([]);
     return;
   }
   try {
@@ -561,6 +622,14 @@ async function loadCmsData() {
       renderOrderManager(orders.orders || []);
     } catch {
       renderOrderManager([]);
+    }
+    try {
+      const news = await apiRequest("/api/cms/news");
+      managedNewsPosts = news.posts || [];
+      renderNewsManager(managedNewsPosts);
+    } catch {
+      managedNewsPosts = [];
+      renderNewsManager([]);
     }
   }
   if (currentUser.role === "super_admin") {
@@ -989,21 +1058,69 @@ roleTools.forEach((button) => {
 newsForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!currentUser || !["admin", "super_admin"].includes(currentUser.role)) {
-    newsNote.textContent = "Hanya admin atau super admin boleh post news.";
+    newsNote.textContent = "Hanya admin atau super admin boleh urus news.";
     showPage("login");
     return;
   }
   const data = new FormData(newsForm);
+  const imageFile = data.get("image_file");
+  const uploadedImage = imageFile && imageFile.size ? await readFileAsDataUrl(imageFile) : "";
+  const newsId = data.get("id");
+  const payload = {
+    title: data.get("title"),
+    category: data.get("category"),
+    excerpt: data.get("excerpt"),
+    image_url: uploadedImage || data.get("image_url"),
+    body: data.get("body"),
+    status: data.get("status"),
+  };
   try {
-    await apiRequest("/api/news", {
-      method: "POST",
-      body: JSON.stringify({ title: data.get("title"), body: data.get("body") }),
+    await apiRequest(newsId ? `/api/cms/news/${newsId}` : "/api/cms/news", {
+      method: newsId ? "PATCH" : "POST",
+      body: JSON.stringify(payload),
     });
     newsForm.reset();
-    newsNote.textContent = "News berjaya dipublish.";
+    newsForm.elements.status.value = "published";
+    newsNote.textContent = newsId ? "News berjaya dikemaskini." : "News berjaya dipublish.";
     await loadNews();
+    await loadCmsData();
   } catch (error) {
     newsNote.textContent = error.message;
+  }
+});
+
+newNewsButton.addEventListener("click", () => {
+  newsForm.reset();
+  newsForm.elements.id.value = "";
+  newsForm.elements.status.value = "published";
+  newsNote.textContent = "Sedia untuk post news baharu.";
+});
+
+portalNewsList.addEventListener("click", async (event) => {
+  const editButton = event.target.closest("[data-news-edit]");
+  const deleteButton = event.target.closest("[data-news-delete]");
+  if (editButton) {
+    const post = managedNewsPosts.find((item) => Number(item.id) === Number(editButton.dataset.newsEdit));
+    if (!post) return;
+    newsForm.elements.id.value = post.id;
+    newsForm.elements.title.value = post.title || "";
+    newsForm.elements.category.value = post.category || "Platform";
+    newsForm.elements.excerpt.value = post.excerpt || "";
+    newsForm.elements.image_url.value = post.image_url || "";
+    newsForm.elements.body.value = post.body || "";
+    newsForm.elements.status.value = post.status || "published";
+    newsNote.textContent = "Sedang edit news. Tekan Publish news untuk simpan.";
+    newsForm.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  if (deleteButton) {
+    try {
+      await apiRequest(`/api/cms/news/${deleteButton.dataset.newsDelete}`, { method: "DELETE" });
+      newsNote.textContent = "News telah dipadam.";
+      await loadNews();
+      await loadCmsData();
+    } catch (error) {
+      newsNote.textContent = error.message;
+    }
   }
 });
 
