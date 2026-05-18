@@ -813,6 +813,11 @@ async function ensureUserColumns(pool) {
       if (error.code !== "ER_DUP_FIELDNAME") throw error;
     }
   }
+  try {
+    await pool.query("ALTER TABLE users MODIFY avatar_url MEDIUMTEXT NULL");
+  } catch (error) {
+    if (!["ER_BAD_FIELD_ERROR", "ER_PARSE_ERROR"].includes(error.code)) throw error;
+  }
   const photoColumns = [
     ["authenticity_code", "VARCHAR(80) NULL UNIQUE"],
     ["perceptual_hash", "VARCHAR(128) NULL"],

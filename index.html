@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=4.5.0" />
+    <link rel="stylesheet" href="styles.css?v=4.6.0" />
   </head>
   <body>
     <header class="topbar">
@@ -708,6 +708,7 @@
               <a class="dashboard-jump" href="#dashboard-system">System</a>
             </nav>
             <div class="portal-account">
+              <img class="portal-avatar" id="portalAccountAvatar" src="assets/photoralogo.png" alt="" />
               <span id="roleBadge">Guest</span>
               <strong id="portalAccountName">Photora Account</strong>
               <small id="portalAccountEmail">Login diperlukan</small>
@@ -795,10 +796,18 @@
               <div class="role-dashboard-grid">
             <form class="settings-form" id="profileForm">
               <h3>Update profile</h3>
-              <label>
-                Gambar profile
-                <input name="avatar_url" type="url" placeholder="URL gambar profile" />
-              </label>
+              <div class="passport-upload">
+                <img id="profileAvatarPreview" src="assets/photoralogo.png" alt="" />
+                <div>
+                  <strong>Gambar profile passport</strong>
+                  <span>Upload foto muka format passport. Sistem akan crop kepada nisbah 7:9.</span>
+                  <label class="file-pill">
+                    Pilih gambar
+                    <input name="avatar_file" type="file" accept="image/*" />
+                  </label>
+                  <input name="avatar_url" type="hidden" />
+                </div>
+              </div>
               <label>
                 Nama
                 <input name="name" type="text" placeholder="Nama akaun" />
@@ -1214,6 +1223,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=4.5.0"></script>
+    <script src="app.js?v=4.6.0"></script>
   </body>
 </html>

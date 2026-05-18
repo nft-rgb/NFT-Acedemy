@@ -161,9 +161,11 @@ const resetNote = document.querySelector("#resetNote");
 const logoutButton = document.querySelector("#logoutButton");
 const portalAccountName = document.querySelector("#portalAccountName");
 const portalAccountEmail = document.querySelector("#portalAccountEmail");
+const portalAccountAvatar = document.querySelector("#portalAccountAvatar");
 const profileForm = document.querySelector("#profileForm");
 const walletForm = document.querySelector("#walletForm");
 const profileNote = document.querySelector("#profileNote");
+const profileAvatarPreview = document.querySelector("#profileAvatarPreview");
 const walletNote = document.querySelector("#walletNote");
 const roleDashboardTitle = document.querySelector("#roleDashboardTitle");
 const roleBadge = document.querySelector("#roleBadge");
@@ -286,6 +288,52 @@ function readFileAsDataUrl(file) {
   });
 }
 
+function readPassportImageAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) {
+      resolve("");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      reject(new Error("Sila pilih fail gambar sahaja."));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const targetWidth = 280;
+        const targetHeight = 360;
+        const sourceRatio = image.width / image.height;
+        const targetRatio = targetWidth / targetHeight;
+        let sourceWidth = image.width;
+        let sourceHeight = image.height;
+        let sourceX = 0;
+        let sourceY = 0;
+        if (sourceRatio > targetRatio) {
+          sourceWidth = image.height * targetRatio;
+          sourceX = (image.width - sourceWidth) / 2;
+        } else {
+          sourceHeight = image.width / targetRatio;
+          sourceY = (image.height - sourceHeight) / 2;
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const context = canvas.getContext("2d");
+        context.fillStyle = "#ffffff";
+        context.fillRect(0, 0, targetWidth, targetHeight);
+        context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
+        resolve(canvas.toDataURL("image/jpeg", 0.84));
+      };
+      image.onerror = () => reject(new Error("Gambar profile tidak dapat dibaca."));
+      image.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error("Gambar profile tidak dapat dibaca."));
+    reader.readAsDataURL(file);
+  });
+}
+
 function showToast(message) {
   toast.textContent = message;
   toast.classList.add("show");
@@ -342,6 +390,9 @@ async function loadSettings() {
 function updateAccountUi() {
   accountButton.textContent = "Login";
   roleBadge.textContent = currentUser?.role || "Guest";
+  const avatarSrc = currentUser?.avatar_url || "assets/photoralogo.png";
+  if (portalAccountAvatar) portalAccountAvatar.src = avatarSrc;
+  if (profileAvatarPreview) profileAvatarPreview.src = avatarSrc;
   if (portalAccountName && portalAccountEmail) {
     portalAccountName.textContent = currentUser?.name || "Photora Account";
     portalAccountEmail.textContent = currentUser?.email || "Login diperlukan";
@@ -359,6 +410,7 @@ function updateAccountUi() {
     profileForm.elements.mobile_phone.value = currentUser.mobile_phone || "";
     profileForm.elements.address.value = currentUser.address || "";
     profileForm.elements.avatar_url.value = currentUser.avatar_url || "";
+    if (profileForm.elements.avatar_file) profileForm.elements.avatar_file.value = "";
     walletForm.elements.wallet_crypto.value = currentUser.wallet_crypto || "";
     walletForm.elements.wallet_cash.value = currentUser.wallet_cash || "";
     walletForm.elements.luno_wallet.value = currentUser.luno_wallet || "";
@@ -1051,6 +1103,20 @@ logoutButton.addEventListener("click", async () => {
   showPage("market");
 });
 
+profileForm.elements.avatar_file?.addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    profileNote.textContent = "Memproses gambar passport...";
+    const imageData = await readPassportImageAsDataUrl(file);
+    profileForm.elements.avatar_url.value = imageData;
+    if (profileAvatarPreview) profileAvatarPreview.src = imageData;
+    profileNote.textContent = "Gambar passport sedia untuk disimpan.";
+  } catch (error) {
+    profileNote.textContent = error.message;
+  }
+});
+
 profileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!currentUser) {
@@ -1060,6 +1126,11 @@ profileForm.addEventListener("submit", async (event) => {
   }
   const data = new FormData(profileForm);
   try {
+    let avatarUrl = data.get("avatar_url") || currentUser.avatar_url || "";
+    const avatarFile = data.get("avatar_file");
+    if (avatarFile && avatarFile.size) {
+      avatarUrl = await readPassportImageAsDataUrl(avatarFile);
+    }
     const result = await apiRequest("/api/me/profile", {
       method: "PATCH",
       body: JSON.stringify({
@@ -1068,7 +1139,7 @@ profileForm.addEventListener("submit", async (event) => {
         phone: data.get("phone"),
         mobile_phone: data.get("mobile_phone"),
         address: data.get("address"),
-        avatar_url: data.get("avatar_url"),
+        avatar_url: avatarUrl,
         wallet_crypto: currentUser.wallet_crypto,
         wallet_cash: currentUser.wallet_cash,
         luno_wallet: currentUser.luno_wallet,

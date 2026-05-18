@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   status ENUM('active', 'suspended') NOT NULL DEFAULT 'active',
   email_verified TINYINT(1) NOT NULL DEFAULT 0,
   email_verified_at TIMESTAMP NULL,
-  avatar_url TEXT NULL,
+  avatar_url MEDIUMTEXT NULL,
   address TEXT NULL,
   mobile_phone VARCHAR(40) NULL,
   phone VARCHAR(40) NULL,

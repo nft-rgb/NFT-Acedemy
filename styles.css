@@ -1369,6 +1369,64 @@ h2 {
   resize: vertical;
 }
 
+.passport-upload {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.passport-upload img {
+  width: 92px;
+  aspect-ratio: 7 / 9;
+  border: 2px solid white;
+  border-radius: 12px;
+  object-fit: cover;
+  background: white;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.1);
+}
+
+.passport-upload div {
+  display: grid;
+  gap: 7px;
+}
+
+.passport-upload strong {
+  color: var(--text);
+}
+
+.passport-upload span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.file-pill {
+  position: relative;
+  width: fit-content;
+  min-height: 38px;
+  padding: 0 14px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #010066;
+  color: white !important;
+  cursor: pointer;
+  font-weight: 900 !important;
+}
+
+.file-pill input {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
 .table-heading {
   justify-content: space-between;
   gap: 16px;
@@ -2450,11 +2508,21 @@ th {
 
 .portal-account {
   display: grid;
-  gap: 4px;
+  gap: 6px;
   margin-top: auto;
   padding: 16px;
   border-radius: 12px;
   background: #f8fafc;
+}
+
+.portal-avatar {
+  width: 58px;
+  aspect-ratio: 7 / 9;
+  border: 2px solid white;
+  border-radius: 10px;
+  object-fit: cover;
+  background: white;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
 }
 
 .portal-account small {
