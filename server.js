@@ -37,6 +37,8 @@ const config = {
   sessionSecret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex"),
   superAdminEmail: process.env.SUPER_ADMIN_EMAIL || "admin@photora.local",
   superAdminPassword: process.env.SUPER_ADMIN_PASSWORD || "ChangeMe123!",
+  mailFrom: process.env.MAIL_FROM || "hello@photora.my",
+  whatsappWebhookUrl: process.env.WHATSAPP_WEBHOOK_URL || "",
 };
 
 const marketplaceDefaults = {
@@ -200,7 +202,60 @@ function publicUser(user) {
     wallet_cash: user.wallet_cash || "",
     luno_wallet: user.luno_wallet || "",
     preferred_currency: user.preferred_currency || "MYR",
+    email_verified: Boolean(user.email_verified || user.role === "admin" || user.role === "super_admin"),
   };
+}
+
+function createRawToken() {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+function hashToken(token) {
+  return crypto.createHash("sha256").update(String(token)).digest("hex");
+}
+
+function makeAppUrl(pathname, params = {}) {
+  const url = new URL(pathname, config.appBaseUrl);
+  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+  return url.toString();
+}
+
+async function sendAccountLink(user, type, url) {
+  const subject = type === "email_verify" ? "Sahkan akaun Photora" : "Reset password Photora";
+  const message =
+    type === "email_verify"
+      ? `Klik link ini untuk sahkan akaun Photora anda: ${url}`
+      : `Klik link ini untuk reset password Photora anda: ${url}`;
+
+  console.log(`[Photora notification] to=${user.email} subject="${subject}" ${url}`);
+
+  if (config.whatsappWebhookUrl && user.phone) {
+    await fetch(config.whatsappWebhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to: user.phone, message, subject, email: user.email }),
+    }).catch((error) => console.warn("WhatsApp webhook failed:", error.message));
+  }
+
+  return {
+    channel: config.whatsappWebhookUrl && user.phone ? "email_whatsapp" : "preview",
+    to: user.email,
+    previewUrl: url,
+  };
+}
+
+async function issueAccountToken(db, user, type) {
+  const rawToken = createRawToken();
+  const expiresAt = new Date(Date.now() + 1000 * 60 * (type === "email_verify" ? 60 * 24 : 30));
+  await db.createAuthToken({
+    user_id: user.id,
+    token_hash: hashToken(rawToken),
+    type,
+    expires_at: expiresAt,
+  });
+  const pathname = type === "email_verify" ? "/api/auth/verify-email" : "/api/auth/reset-password";
+  const url = makeAppUrl(pathname, { token: rawToken });
+  return sendAccountLink(user, type, url);
 }
 
 function makeAuthenticityCode(input) {
@@ -271,15 +326,26 @@ function loadLocalData() {
     data.counters ||= {};
     data.counters.news ||= data.news.length;
     data.counters.slides ||= data.slides.length;
+    data.counters.tokens ||= data.auth_tokens?.length || 0;
+    data.auth_tokens ||= [];
+    data.users.forEach((user) => {
+      if (user.email_verified === undefined) user.email_verified = user.role === "admin" || user.role === "super_admin";
+    });
     const superAdmin = data.users.find((user) => user.role === "super_admin");
     if (superAdmin && superAdmin.email !== config.superAdminEmail) {
       superAdmin.email = config.superAdminEmail;
+      superAdmin.email_verified = true;
+      superAdmin.email_verified_at ||= new Date().toISOString();
+      saveLocalData(data);
+    } else if (superAdmin && !superAdmin.email_verified) {
+      superAdmin.email_verified = true;
+      superAdmin.email_verified_at ||= new Date().toISOString();
       saveLocalData(data);
     }
     return data;
   }
   const data = {
-    counters: { users: 1, photos: seedPhotos.length, orders: 0, news: 1, slides: seedSlides.length },
+    counters: { users: 1, photos: seedPhotos.length, orders: 0, news: 1, slides: seedSlides.length, tokens: 0 },
     users: [
       {
         id: 1,
@@ -288,6 +354,8 @@ function loadLocalData() {
         password_hash: hashPassword(config.superAdminPassword),
         role: "super_admin",
         status: "active",
+        email_verified: true,
+        email_verified_at: new Date().toISOString(),
         phone: "",
         wallet_crypto: "",
         wallet_cash: "",
@@ -298,6 +366,7 @@ function loadLocalData() {
     ],
     photos: seedPhotos.map((photo, index) => ({ id: index + 1, creator_id: null, created_at: new Date().toISOString(), ...photo })),
     orders: [],
+    auth_tokens: [],
     news: [
       {
         id: 1,
@@ -334,14 +403,17 @@ function createLocalStore() {
       return data.users.find((user) => user.id === Number(id)) || null;
     },
     async createUser(input) {
+      const role = input.role || "user";
       const user = {
         id: ++data.counters.users,
         name: input.name,
         email: input.email,
         password_hash: hashPassword(input.password),
-        role: input.role || "user",
+        role,
         status: "active",
-        phone: "",
+        email_verified: role === "admin" || role === "super_admin" || Boolean(input.email_verified),
+        email_verified_at: role === "admin" || role === "super_admin" || input.email_verified ? new Date().toISOString() : null,
+        phone: input.phone || "",
         wallet_crypto: "",
         wallet_cash: "",
         luno_wallet: "",
@@ -354,6 +426,46 @@ function createLocalStore() {
     },
     async listUsers() {
       return data.users.map(publicUser);
+    },
+    async createAuthToken(input) {
+      data.auth_tokens.push({
+        id: ++data.counters.tokens,
+        user_id: input.user_id,
+        token_hash: input.token_hash,
+        type: input.type,
+        expires_at: input.expires_at.toISOString(),
+        consumed_at: null,
+        created_at: new Date().toISOString(),
+      });
+      saveLocalData(data);
+    },
+    async consumeAuthToken(rawToken, type) {
+      const token = data.auth_tokens.find(
+        (item) =>
+          item.token_hash === hashToken(rawToken) &&
+          item.type === type &&
+          !item.consumed_at &&
+          new Date(item.expires_at).getTime() > Date.now(),
+      );
+      if (!token) return null;
+      token.consumed_at = new Date().toISOString();
+      saveLocalData(data);
+      return token;
+    },
+    async setEmailVerified(id) {
+      const user = data.users.find((item) => item.id === Number(id));
+      if (!user) return null;
+      user.email_verified = true;
+      user.email_verified_at = new Date().toISOString();
+      saveLocalData(data);
+      return user;
+    },
+    async updatePassword(id, password) {
+      const user = data.users.find((item) => item.id === Number(id));
+      if (!user) return null;
+      user.password_hash = hashPassword(password);
+      saveLocalData(data);
+      return user;
     },
     async updateUserProfile(id, input) {
       const user = data.users.find((item) => item.id === Number(id));
@@ -530,6 +642,8 @@ async function ensureUserColumns(pool) {
     ["wallet_cash", "VARCHAR(190) NULL"],
     ["luno_wallet", "VARCHAR(190) NULL"],
     ["preferred_currency", "VARCHAR(12) NOT NULL DEFAULT 'MYR'"],
+    ["email_verified", "TINYINT(1) NOT NULL DEFAULT 0"],
+    ["email_verified_at", "TIMESTAMP NULL"],
   ];
 
   for (const [column, definition] of columns) {
@@ -631,11 +745,14 @@ function createMysqlStore(pool) {
       const [rows] = await pool.execute("SELECT id FROM users WHERE role = 'super_admin' ORDER BY id ASC LIMIT 1");
       if (rows.length === 0) {
         await pool.execute(
-          "INSERT INTO users (name, email, password_hash, role, status) VALUES (?, ?, ?, 'super_admin', 'active')",
+          "INSERT INTO users (name, email, password_hash, role, status, email_verified, email_verified_at) VALUES (?, ?, ?, 'super_admin', 'active', 1, NOW())",
           ["Super Admin", config.superAdminEmail, hashPassword(config.superAdminPassword)],
         );
       } else {
-        await pool.execute("UPDATE users SET email = ? WHERE id = ? AND email <> ?", [config.superAdminEmail, rows[0].id, config.superAdminEmail]);
+        await pool.execute("UPDATE users SET email = ?, email_verified = 1, email_verified_at = COALESCE(email_verified_at, NOW()) WHERE id = ?", [
+          config.superAdminEmail,
+          rows[0].id,
+        ]);
       }
       const [photoRows] = await pool.execute("SELECT id FROM photos LIMIT 1");
       if (photoRows.length === 0) {
@@ -669,17 +786,45 @@ function createMysqlStore(pool) {
       return rows[0] || null;
     },
     async createUser(input) {
+      const role = input.role || "user";
+      const verified = role === "admin" || role === "super_admin" || input.email_verified ? 1 : 0;
       const [result] = await pool.execute(
-        "INSERT INTO users (name, email, password_hash, role, status) VALUES (?, ?, ?, ?, 'active')",
-        [input.name, input.email, hashPassword(input.password), input.role || "user"],
+        "INSERT INTO users (name, email, password_hash, role, status, phone, email_verified, email_verified_at) VALUES (?, ?, ?, ?, 'active', ?, ?, ?)",
+        [input.name, input.email, hashPassword(input.password), role, input.phone || "", verified, verified ? new Date() : null],
       );
       return this.getUserById(result.insertId);
     },
     async listUsers() {
       const [rows] = await pool.execute(
-        "SELECT id, name, email, role, status, phone, wallet_crypto, wallet_cash, luno_wallet, preferred_currency, created_at FROM users ORDER BY id DESC",
+        "SELECT id, name, email, role, status, phone, wallet_crypto, wallet_cash, luno_wallet, preferred_currency, email_verified, created_at FROM users ORDER BY id DESC",
       );
       return rows;
+    },
+    async createAuthToken(input) {
+      await pool.execute("INSERT INTO auth_tokens (user_id, token_hash, type, expires_at) VALUES (?, ?, ?, ?)", [
+        input.user_id,
+        input.token_hash,
+        input.type,
+        input.expires_at,
+      ]);
+    },
+    async consumeAuthToken(rawToken, type) {
+      const [rows] = await pool.execute(
+        "SELECT auth_tokens.*, users.email, users.name, users.role FROM auth_tokens JOIN users ON users.id = auth_tokens.user_id WHERE auth_tokens.token_hash = ? AND auth_tokens.type = ? AND auth_tokens.consumed_at IS NULL AND auth_tokens.expires_at > NOW() LIMIT 1",
+        [hashToken(rawToken), type],
+      );
+      const token = rows[0];
+      if (!token) return null;
+      await pool.execute("UPDATE auth_tokens SET consumed_at = NOW() WHERE id = ?", [token.id]);
+      return token;
+    },
+    async setEmailVerified(id) {
+      await pool.execute("UPDATE users SET email_verified = 1, email_verified_at = NOW() WHERE id = ?", [id]);
+      return this.getUserById(id);
+    },
+    async updatePassword(id, password) {
+      await pool.execute("UPDATE users SET password_hash = ? WHERE id = ?", [hashPassword(password), id]);
+      return this.getUserById(id);
     },
     async updateUserProfile(id, input) {
       await pool.execute(
@@ -975,9 +1120,95 @@ async function handleAuth(req, res, pathname) {
       sendJson(res, 409, { error: "Email already registered." });
       return true;
     }
-    const user = await db.createUser({ name: payload.name, email: payload.email, password: payload.password, role: "user" });
-    const token = createSession(user);
-    sendJson(res, 201, { user: publicUser(user) }, { "Set-Cookie": cookieHeader(token) });
+    const user = await db.createUser({
+      name: payload.name,
+      email: payload.email,
+      password: payload.password,
+      phone: payload.phone || "",
+      role: "user",
+    });
+    const delivery = await issueAccountToken(db, user, "email_verify");
+    sendJson(res, 201, {
+      user: publicUser(user),
+      delivery,
+      message: "Akaun didaftarkan. Sila sahkan email sebelum login.",
+    });
+    return true;
+  }
+
+  if (req.method === "GET" && pathname === "/api/auth/verify-email") {
+    const url = new URL(req.url, config.appBaseUrl);
+    const token = await db.consumeAuthToken(url.searchParams.get("token") || "", "email_verify");
+    if (!token) {
+      res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
+      res.end("<h1>Link tidak sah</h1><p>Link pengesahan tamat tempoh atau sudah digunakan.</p>");
+      return true;
+    }
+    await db.setEmailVerified(token.user_id);
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    res.end('<h1>Email berjaya disahkan</h1><p>Akaun Photora anda sudah aktif. <a href="/#login">Login sekarang</a>.</p>');
+    return true;
+  }
+
+  if (req.method === "POST" && pathname === "/api/auth/request-reset") {
+    const payload = await readJson(req);
+    const user = await db.getUserByEmail(payload.email || "");
+    if (!user) {
+      sendJson(res, 200, { ok: true, message: "Jika akaun wujud, link reset akan dihantar." });
+      return true;
+    }
+    const delivery = await issueAccountToken(db, user, "password_reset");
+    sendJson(res, 200, { ok: true, delivery, message: "Link reset password telah disediakan." });
+    return true;
+  }
+
+  if (req.method === "GET" && pathname === "/api/auth/reset-password") {
+    const url = new URL(req.url, config.appBaseUrl);
+    const token = String(url.searchParams.get("token") || "");
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    res.end(`<!doctype html>
+      <html lang="ms">
+        <head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reset Password Photora</title></head>
+        <body style="font-family:Inter,Arial,sans-serif;background:#f8fafc;margin:0;display:grid;min-height:100vh;place-items:center;color:#0f172a">
+          <form id="reset" style="display:grid;gap:14px;width:min(420px,92vw);padding:28px;border:1px solid #e5e7eb;border-radius:18px;background:white;box-shadow:0 20px 70px rgba(15,23,42,.12)">
+            <h1 style="margin:0;font-size:1.8rem">Reset password</h1>
+            <p style="margin:0;color:#64748b">Masukkan password baharu untuk akaun Photora anda.</p>
+            <input name="password" type="password" required minlength="8" placeholder="Password baharu" style="min-height:48px;border:1px solid #dbe3ef;border-radius:12px;padding:0 14px">
+            <button style="min-height:48px;border:0;border-radius:12px;background:#010066;color:white;font-weight:900">Simpan password</button>
+            <p id="note" style="margin:0;color:#64748b"></p>
+          </form>
+          <script>
+            document.querySelector("#reset").addEventListener("submit", async (event) => {
+              event.preventDefault();
+              const note = document.querySelector("#note");
+              note.textContent = "Menyimpan...";
+              const response = await fetch("/api/auth/reset-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token: ${JSON.stringify(token)}, password: new FormData(event.currentTarget).get("password") })
+              });
+              const result = await response.json().catch(() => ({}));
+              note.innerHTML = response.ok ? 'Password sudah ditukar. <a href="/#login">Login sekarang</a>.' : (result.error || "Reset gagal.");
+            });
+          </script>
+        </body>
+      </html>`);
+    return true;
+  }
+
+  if (req.method === "POST" && pathname === "/api/auth/reset-password") {
+    const payload = await readJson(req);
+    if (!payload.token || !payload.password || String(payload.password).length < 8) {
+      sendJson(res, 400, { error: "Token dan password minimum 8 aksara diperlukan." });
+      return true;
+    }
+    const token = await db.consumeAuthToken(payload.token, "password_reset");
+    if (!token) {
+      sendJson(res, 400, { error: "Link reset tidak sah atau telah tamat tempoh." });
+      return true;
+    }
+    await db.updatePassword(token.user_id, payload.password);
+    sendJson(res, 200, { ok: true });
     return true;
   }
 
@@ -986,6 +1217,11 @@ async function handleAuth(req, res, pathname) {
     const user = await db.getUserByEmail(payload.email || "");
     if (!user || !verifyPassword(payload.password || "", user.password_hash) || user.status !== "active") {
       sendJson(res, 401, { error: "Invalid login." });
+      return true;
+    }
+    if (!user.email_verified && user.role === "user") {
+      const delivery = await issueAccountToken(db, user, "email_verify");
+      sendJson(res, 403, { error: "Sila sahkan email sebelum login.", delivery });
       return true;
     }
     const token = createSession(user);
@@ -1201,7 +1437,7 @@ async function handleApi(req, res, pathname) {
       sendJson(res, 409, { error: "Email already registered." });
       return true;
     }
-    sendJson(res, 201, { user: publicUser(await db.createUser(payload)) });
+    sendJson(res, 201, { user: publicUser(await db.createUser({ ...payload, email_verified: true })) });
     return true;
   }
 

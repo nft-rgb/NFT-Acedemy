@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=4.0.4" />
+    <link rel="stylesheet" href="styles.css?v=4.1.0" />
   </head>
   <body>
     <header class="topbar">
@@ -30,15 +30,12 @@
         Menu
       </button>
       <nav class="nav-links" id="primaryNav" aria-label="Navigasi utama">
-        <a class="active" href="#market" data-page="market"><span>Utama</span></a>
-        <a href="#market"><span>Marketplace</span></a>
+        <a class="active" href="#market" data-page="market"><span>Marketplace</span></a>
         <a href="#mint" data-page="mint"><span>Mint Foto</span></a>
-        <a href="#dashboard" data-page="dashboard"><span>Semakan</span></a>
         <a href="#cart" data-page="cart"><span>Cart</span></a>
+        <a href="#news" data-page="news"><span>News</span></a>
         <a href="#about" data-page="about"><span>About</span></a>
         <a href="#contact" data-page="contact"><span>Contact</span></a>
-        <a href="#news" data-page="news"><span>News</span></a>
-        <a href="#login" data-page="login"><span>Login</span></a>
         <a class="secondary-nav" href="#protection" data-page="protection"><span>Protect</span></a>
         <a class="secondary-nav" href="#security" data-page="security"><span>Security</span></a>
         <a class="secondary-nav" href="#growth" data-page="growth"><span>Growth</span></a>
@@ -48,7 +45,7 @@
         <span class="status-dot"></span>
         <span id="walletText">Connect Wallet</span>
       </button>
-      <a class="account-button" id="accountButton" href="#login" data-page="login">Login</a>
+      <a class="account-button" id="accountButton" href="#login">Login</a>
     </header>
 
     <main>
@@ -706,8 +703,9 @@
             </nav>
             <div class="portal-account">
               <span id="roleBadge">Guest</span>
-              <strong>Photora Admin</strong>
-              <small>hello@photora.my</small>
+              <strong id="portalAccountName">Photora Account</strong>
+              <small id="portalAccountEmail">Login diperlukan</small>
+              <button class="logout-button" id="logoutButton" type="button">Log Keluar</button>
             </div>
           </aside>
 
@@ -994,12 +992,24 @@
                 Password
                 <input name="password" type="password" placeholder="Password" required />
               </label>
+              <label class="register-only">
+                No. WhatsApp
+                <input name="phone" type="tel" placeholder="60123456789" />
+              </label>
               <label class="remember-row">
                 <input type="checkbox" />
                 <span>Ingat saya</span>
               </label>
               <button class="primary-action full" type="submit" id="authSubmit">Login</button>
               <p class="form-note" id="authNote" role="status"></p>
+            </form>
+            <form class="reset-form" id="resetForm">
+              <span>Lupa password atau belum sahkan email?</span>
+              <div>
+                <input name="email" type="email" placeholder="Email akaun" />
+                <button type="submit">Hantar link</button>
+              </div>
+              <p class="form-note" id="resetNote" role="status"></p>
             </form>
           </div>
         </div>
@@ -1008,45 +1018,39 @@
 
     <footer class="site-footer">
       <div class="footer-brand">
-        <span class="brand-mark image-mark"><img src="assets/photoralogo.png" alt="" /></span>
+        <a class="footer-logo" href="#market" data-page="market">
+          <span class="brand-mark image-mark"><img src="assets/photoralogo.png" alt="" /></span>
+          <strong>Photora</strong>
+        </a>
         <div>
-          <strong>Photora NFT Marketplace</strong>
-          <span>Real photo NFT marketplace</span>
+          <span>NFT photo marketplace. Real photos, verified creators, digital ownership.</span>
+          <a href="mailto:hello@photora.my">hello@photora.my</a>
         </div>
       </div>
       <div class="footer-links">
-        <span>Platform</span>
+        <span>Marketplace</span>
         <a href="#market" data-page="market">Discover</a>
-        <a href="#news" data-page="news">News</a>
-        <a href="#dashboard" data-page="dashboard">Dashboard</a>
-      </div>
-      <div class="footer-contact">
-        <span>Contact</span>
-        <a href="mailto:hello@photora.my">hello@photora.my</a>
+        <a href="#mint" data-page="mint">Create NFT</a>
+        <a href="#cart" data-page="cart">Cart</a>
       </div>
       <div class="footer-social">
         <span>Social</span>
-        <div class="social-links" aria-label="Social media">
-          <a href="https://www.instagram.com/" target="_blank" rel="noreferrer" aria-label="Instagram">IG</a>
-          <a href="https://x.com/" target="_blank" rel="noreferrer" aria-label="X">X</a>
-          <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer" aria-label="LinkedIn">IN</a>
-          <a href="https://www.tiktok.com/" target="_blank" rel="noreferrer" aria-label="TikTok">TT</a>
-        </div>
-        <a class="developer-link" href="https://nexio.my" target="_blank" rel="noreferrer">Developed by nexio.my</a>
+        <a href="https://x.com/" target="_blank" rel="noreferrer">Twitter</a>
+        <a href="https://www.facebook.com/" target="_blank" rel="noreferrer">Facebook</a>
+        <a href="https://www.instagram.com/" target="_blank" rel="noreferrer">Instagram</a>
+        <a href="https://t.me/" target="_blank" rel="noreferrer">Telegram</a>
+        <a href="https://www.youtube.com/" target="_blank" rel="noreferrer">Youtube</a>
+        <a href="#news" data-page="news">Blog</a>
       </div>
-      <div class="footer-compliance">
-        <div class="compliance-badges" aria-label="Security and compliance status">
-          <span>SSL Secure</span>
-          <span>2FA Ready</span>
-          <span>Secure Checkout</span>
-          <span>Private Vault</span>
-        </div>
-        <div class="footer-mini-links">
-          <a href="#security" data-page="security">Security</a>
-          <a href="#protection" data-page="protection">Protection</a>
-          <a href="mailto:hello@photora.my">Support</a>
-        </div>
+      <div class="footer-company">
+        <span>Company</span>
+        <a href="#about" data-page="about">About us</a>
+        <a href="#contact" data-page="contact">Contact</a>
+        <a href="#security" data-page="security">Security</a>
+        <a href="#protection" data-page="protection">Protection</a>
+        <a class="developer-link" href="https://nexio.my" target="_blank" rel="noreferrer">nexio.my</a>
       </div>
+      <p class="footer-copy">© 2026 Photora NFT Marketplace. All Rights Reserved.</p>
     </footer>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1073,6 +1077,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=4.0.4"></script>
+    <script src="app.js?v=4.1.0"></script>
   </body>
 </html>

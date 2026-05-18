@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('user', 'admin', 'super_admin') NOT NULL DEFAULT 'user',
   status ENUM('active', 'suspended') NOT NULL DEFAULT 'active',
+  email_verified TINYINT(1) NOT NULL DEFAULT 0,
+  email_verified_at TIMESTAMP NULL,
   phone VARCHAR(40) NULL,
   wallet_crypto VARCHAR(190) NULL,
   wallet_cash VARCHAR(190) NULL,
@@ -52,6 +54,19 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE INDEX idx_photos_status ON photos(status);
 CREATE INDEX idx_photos_category ON photos(category);
 CREATE INDEX idx_orders_status ON orders(payment_status);
+
+CREATE TABLE IF NOT EXISTS auth_tokens (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  token_hash VARCHAR(128) NOT NULL UNIQUE,
+  type ENUM('email_verify', 'password_reset') NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  consumed_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_auth_tokens_lookup ON auth_tokens(type, token_hash, expires_at);
 
 CREATE TABLE IF NOT EXISTS news_posts (
   id INT AUTO_INCREMENT PRIMARY KEY,

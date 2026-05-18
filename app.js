@@ -152,6 +152,11 @@ const authNote = document.querySelector("#authNote");
 const authSubmit = document.querySelector("#authSubmit");
 const authTabs = document.querySelectorAll("[data-auth-mode]");
 const registerOnlyFields = document.querySelectorAll(".register-only");
+const resetForm = document.querySelector("#resetForm");
+const resetNote = document.querySelector("#resetNote");
+const logoutButton = document.querySelector("#logoutButton");
+const portalAccountName = document.querySelector("#portalAccountName");
+const portalAccountEmail = document.querySelector("#portalAccountEmail");
 const profileForm = document.querySelector("#profileForm");
 const walletForm = document.querySelector("#walletForm");
 const profileNote = document.querySelector("#profileNote");
@@ -253,7 +258,11 @@ async function apiRequest(path, options = {}) {
     ...options,
   });
   const result = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(result.error || "Request failed.");
+  if (!response.ok) {
+    const error = new Error(result.error || "Request failed.");
+    error.result = result;
+    throw error;
+  }
   return result;
 }
 
@@ -291,6 +300,13 @@ async function loadSettings() {
 function updateAccountUi() {
   accountButton.textContent = "Login";
   roleBadge.textContent = currentUser?.role || "Guest";
+  if (portalAccountName && portalAccountEmail) {
+    portalAccountName.textContent = currentUser?.name || "Photora Account";
+    portalAccountEmail.textContent = currentUser?.email || "Login diperlukan";
+  }
+  if (logoutButton) {
+    logoutButton.hidden = !currentUser;
+  }
   roleDashboardTitle.textContent = currentUser
     ? `Dashboard ${currentUser.role.replace("_", " ")}`
     : "Dashboard pengguna";
@@ -837,18 +853,30 @@ async function submitAuthForm() {
         name: data.get("name"),
         email: data.get("email"),
         password: data.get("password"),
+        phone: data.get("phone"),
       }),
     });
-    currentUser = result.user;
-    updateAccountUi();
     authForm.reset();
-    showToast(`Login sebagai ${currentUser.role}.`);
-    await loadPhotos();
-    await loadCmsData();
-    showPage("dashboard");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (authMode === "register") {
+      currentUser = null;
+      updateAccountUi();
+      setAuthMode("login");
+      authNote.innerHTML = result.delivery?.previewUrl
+        ? `Akaun didaftar. Sahkan email melalui link ini: <a href="${result.delivery.previewUrl}">Sahkan email</a>`
+        : "Akaun didaftar. Sila semak email untuk link pengesahan.";
+    } else {
+      currentUser = result.user;
+      updateAccountUi();
+      showToast(`Login sebagai ${currentUser.role}.`);
+      await loadPhotos();
+      await loadCmsData();
+      showPage("dashboard");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   } catch (error) {
-    authNote.textContent = error.message;
+    authNote.innerHTML = error.result?.delivery?.previewUrl
+      ? `${error.message} <a href="${error.result.delivery.previewUrl}">Sahkan email</a>`
+      : error.message;
   } finally {
     authSubmit.disabled = false;
   }
@@ -862,6 +890,33 @@ authForm.addEventListener("submit", async (event) => {
 authSubmit.addEventListener("click", async (event) => {
   event.preventDefault();
   await submitAuthForm();
+});
+
+resetForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const data = new FormData(resetForm);
+  resetNote.textContent = "Menghantar link keselamatan...";
+  try {
+    const result = await apiRequest("/api/auth/request-reset", {
+      method: "POST",
+      body: JSON.stringify({ email: data.get("email") }),
+    });
+    resetNote.innerHTML = result.delivery?.previewUrl
+      ? `Link tersedia: <a href="${result.delivery.previewUrl}">Buka link reset</a>`
+      : "Jika akaun wujud, link reset telah dihantar ke email/WhatsApp.";
+    resetForm.reset();
+  } catch (error) {
+    resetNote.textContent = error.message;
+  }
+});
+
+logoutButton.addEventListener("click", async () => {
+  await apiRequest("/api/auth/logout", { method: "POST" }).catch(() => null);
+  currentUser = null;
+  updateAccountUi();
+  await loadCmsData();
+  showToast("Anda telah log keluar.");
+  showPage("market");
 });
 
 profileForm.addEventListener("submit", async (event) => {
