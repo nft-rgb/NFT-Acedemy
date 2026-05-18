@@ -87,3 +87,32 @@ CREATE TABLE IF NOT EXISTS platform_settings (
   setting_value VARCHAR(190) NOT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS nfts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  photo_id INT NULL,
+  token_id VARCHAR(120) NULL,
+  blockchain VARCHAR(40) NOT NULL DEFAULT 'polygon',
+  contract_address VARCHAR(190) NULL,
+  owner_wallet VARCHAR(190) NULL,
+  metadata_uri TEXT NULL,
+  royalty_percent DECIMAL(5,2) NOT NULL DEFAULT 10.00,
+  status ENUM('draft', 'minted', 'listed') NOT NULL DEFAULT 'draft',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_id INT NULL,
+  nft_id INT NULL,
+  buyer_wallet VARCHAR(190) NULL,
+  seller_wallet VARCHAR(190) NULL,
+  crypto_type VARCHAR(20) NULL,
+  amount DECIMAL(18,8) NOT NULL DEFAULT 0.00000000,
+  amount_myr DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  status ENUM('pending', 'paid', 'failed') NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL,
+  FOREIGN KEY (nft_id) REFERENCES nfts(id) ON DELETE SET NULL
+);

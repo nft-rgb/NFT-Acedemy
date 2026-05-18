@@ -2573,11 +2573,31 @@ th {
 }
 
 .cart-layout,
-.sales-strip {
+.sales-strip,
+.vision-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
   gap: 18px;
   align-items: start;
+}
+
+.vision-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.vision-grid article,
+.contact-card {
+  padding: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.96), rgba(30, 27, 75, 0.92));
+  color: white;
+}
+
+.vision-grid p,
+.contact-card p {
+  color: #cbd5e1;
+  line-height: 1.65;
 }
 
 .cart-list,
