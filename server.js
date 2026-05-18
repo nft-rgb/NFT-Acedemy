@@ -39,6 +39,12 @@ const config = {
   superAdminPassword: process.env.SUPER_ADMIN_PASSWORD || "ChangeMe123!",
 };
 
+const marketplaceDefaults = {
+  serviceFeePercent: 6,
+  listingFeeMyr: 2,
+  ethToMyr: 15000,
+};
+
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -56,6 +62,7 @@ const seedPhotos = [
     creator_name: "Lensa Ilmu Studio",
     category: "Konvokesyen",
     price_eth: 0.42,
+    price_myr: 6300,
     image_url: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=900&q=80",
     description: "Foto konvokesyen asli untuk koleksi digital.",
     source_type: "dslr",
@@ -66,6 +73,7 @@ const seedPhotos = [
     creator_name: "Urban Archive",
     category: "Street",
     price_eth: 0.35,
+    price_myr: 5250,
     image_url: "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=900&q=80",
     description: "Street photography daripada kamera sebenar.",
     source_type: "mobilegraphy",
@@ -76,6 +84,7 @@ const seedPhotos = [
     creator_name: "Pocket Lens MY",
     category: "Mobilegraphy",
     price_eth: 0.14,
+    price_myr: 2100,
     image_url: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=80",
     description: "Mobilegraphy asli untuk marketplace Photora.",
     source_type: "mobilegraphy",
@@ -374,6 +383,8 @@ function createLocalStore() {
         creator_name: user.name,
         category: input.category,
         price_eth: Number(input.price_eth || input.price || 0),
+        price_myr: Number(input.price_myr || input.price_myr === 0 ? input.price_myr : Number(input.price_eth || input.price || 0) * marketplaceDefaults.ethToMyr),
+        listing_fee_myr: marketplaceDefaults.listingFeeMyr,
         image_url: input.image_url || input.image,
         authenticity_code: makeAuthenticityCode(input),
         perceptual_hash: makePerceptualHash(input.image_url || input.image),
@@ -390,6 +401,16 @@ function createLocalStore() {
       const photo = data.photos.find((item) => item.id === Number(id));
       if (!photo) return null;
       photo.status = status;
+      saveLocalData(data);
+      return photo;
+    },
+    async updatePhotoPricing(id, input, user) {
+      const photo = data.photos.find((item) => item.id === Number(id));
+      if (!photo) return null;
+      const canEdit = user.role === "admin" || user.role === "super_admin" || Number(photo.creator_id) === Number(user.id);
+      if (!canEdit) return null;
+      if (input.price_eth !== undefined) photo.price_eth = Number(input.price_eth || 0);
+      if (input.price_myr !== undefined) photo.price_myr = Number(input.price_myr || 0);
       saveLocalData(data);
       return photo;
     },
@@ -412,6 +433,10 @@ function createLocalStore() {
         photo_id: input.photo_id || null,
         amount_myr: input.amount_myr,
         amount_eth: input.amount_eth,
+        platform_fee_myr: input.platform_fee_myr || Number(input.amount_myr || 0) * (marketplaceDefaults.serviceFeePercent / 100),
+        creator_payout_myr:
+          input.creator_payout_myr ||
+          Number(input.amount_myr || 0) - Number(input.amount_myr || 0) * (marketplaceDefaults.serviceFeePercent / 100),
         payment_provider: input.payment_provider || "ToyyibPay",
         payment_status: input.payment_status || "pending",
         bill_code: input.bill_code || null,
@@ -431,6 +456,19 @@ function createLocalStore() {
     },
     async listOrders() {
       return data.orders;
+    },
+    async getSalesSummary(user) {
+      const orders = data.orders.filter((order) => user.role === "super_admin" || user.role === "admin" || Number(order.buyer_id) === Number(user.id));
+      const grossMyr = orders.reduce((total, order) => total + Number(order.amount_myr || 0), 0);
+      const platformFeeMyr = orders.reduce((total, order) => total + Number(order.platform_fee_myr || 0), 0);
+      return {
+        orders: orders.length,
+        gross_myr: grossMyr,
+        platform_fee_myr: platformFeeMyr,
+        creator_payout_myr: grossMyr - platformFeeMyr,
+        service_fee_percent: marketplaceDefaults.serviceFeePercent,
+        listing_fee_myr: marketplaceDefaults.listingFeeMyr,
+      };
     },
     async listNews() {
       return data.news.filter((post) => post.status === "published").sort((a, b) => b.id - a.id);
@@ -504,12 +542,25 @@ async function ensureUserColumns(pool) {
   const photoColumns = [
     ["authenticity_code", "VARCHAR(80) NULL UNIQUE"],
     ["perceptual_hash", "VARCHAR(128) NULL"],
+    ["price_myr", "DECIMAL(12,2) NOT NULL DEFAULT 0.00"],
+    ["listing_fee_myr", "DECIMAL(12,2) NOT NULL DEFAULT 2.00"],
   ];
   for (const [column, definition] of photoColumns) {
     try {
       await pool.query(`ALTER TABLE photos ADD COLUMN ${column} ${definition}`);
     } catch (error) {
       if (!["ER_DUP_FIELDNAME", "ER_DUP_KEYNAME"].includes(error.code)) throw error;
+    }
+  }
+  const orderColumns = [
+    ["platform_fee_myr", "DECIMAL(12,2) NOT NULL DEFAULT 0.00"],
+    ["creator_payout_myr", "DECIMAL(12,2) NOT NULL DEFAULT 0.00"],
+  ];
+  for (const [column, definition] of orderColumns) {
+    try {
+      await pool.query(`ALTER TABLE orders ADD COLUMN ${column} ${definition}`);
+    } catch (error) {
+      if (error.code !== "ER_DUP_FIELDNAME") throw error;
     }
   }
 }
@@ -590,12 +641,14 @@ function createMysqlStore(pool) {
       if (photoRows.length === 0) {
         for (const photo of seedPhotos) {
           await pool.execute(
-            "INSERT INTO photos (title, creator_name, category, price_eth, image_url, authenticity_code, perceptual_hash, description, source_type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO photos (title, creator_name, category, price_eth, price_myr, listing_fee_myr, image_url, authenticity_code, perceptual_hash, description, source_type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [
               photo.title,
               photo.creator_name,
               photo.category,
               photo.price_eth,
+              photo.price_myr || Number(photo.price_eth || 0) * marketplaceDefaults.ethToMyr,
+              marketplaceDefaults.listingFeeMyr,
               photo.image_url,
               makeAuthenticityCode(photo),
               makePerceptualHash(photo.image_url),
@@ -661,13 +714,15 @@ function createMysqlStore(pool) {
     async createPhoto(input, user) {
       const status = user.role === "user" ? "pending" : "approved";
       const [result] = await pool.execute(
-        "INSERT INTO photos (title, creator_id, creator_name, category, price_eth, image_url, authenticity_code, perceptual_hash, description, source_type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO photos (title, creator_id, creator_name, category, price_eth, price_myr, listing_fee_myr, image_url, authenticity_code, perceptual_hash, description, source_type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           input.title,
           user.id,
           user.name,
           input.category,
           Number(input.price_eth || input.price || 0),
+          Number(input.price_myr || Number(input.price_eth || input.price || 0) * marketplaceDefaults.ethToMyr),
+          marketplaceDefaults.listingFeeMyr,
           input.image_url || input.image,
           makeAuthenticityCode({ ...input, creator_name: user.name }),
           makePerceptualHash(input.image_url || input.image),
@@ -677,6 +732,18 @@ function createMysqlStore(pool) {
         ],
       );
       return this.getPhotoById(result.insertId);
+    },
+    async updatePhotoPricing(id, input, user) {
+      const photo = await this.getPhotoById(id);
+      if (!photo) return null;
+      const canEdit = user.role === "admin" || user.role === "super_admin" || Number(photo.creator_id) === Number(user.id);
+      if (!canEdit) return null;
+      await pool.execute("UPDATE photos SET price_eth = COALESCE(?, price_eth), price_myr = COALESCE(?, price_myr) WHERE id = ?", [
+        input.price_eth === undefined ? null : Number(input.price_eth),
+        input.price_myr === undefined ? null : Number(input.price_myr),
+        id,
+      ]);
+      return this.getPhotoById(id);
     },
     async updatePhotoStatus(id, status) {
       await pool.execute("UPDATE photos SET status = ? WHERE id = ?", [status, id]);
@@ -695,13 +762,16 @@ function createMysqlStore(pool) {
     },
     async createOrder(input) {
       await pool.execute(
-        "INSERT INTO orders (order_ref, buyer_id, photo_id, amount_myr, amount_eth, payment_provider, payment_status, bill_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO orders (order_ref, buyer_id, photo_id, amount_myr, amount_eth, platform_fee_myr, creator_payout_myr, payment_provider, payment_status, bill_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           input.order_ref,
           input.buyer_id || null,
           input.photo_id || null,
           input.amount_myr,
           input.amount_eth,
+          input.platform_fee_myr || Number(input.amount_myr || 0) * (marketplaceDefaults.serviceFeePercent / 100),
+          input.creator_payout_myr ||
+            Number(input.amount_myr || 0) - Number(input.amount_myr || 0) * (marketplaceDefaults.serviceFeePercent / 100),
           input.payment_provider || "ToyyibPay",
           input.payment_status || "pending",
           input.bill_code || null,
@@ -721,6 +791,19 @@ function createMysqlStore(pool) {
         "SELECT orders.*, photos.title AS photo_title, users.email AS buyer_email FROM orders LEFT JOIN photos ON photos.id = orders.photo_id LEFT JOIN users ON users.id = orders.buyer_id ORDER BY orders.id DESC",
       );
       return rows;
+    },
+    async getSalesSummary(user) {
+      const where = user.role === "super_admin" || user.role === "admin" ? "" : "WHERE orders.buyer_id = ?";
+      const params = where ? [user.id] : [];
+      const [rows] = await pool.execute(
+        `SELECT COUNT(*) AS orders, COALESCE(SUM(amount_myr),0) AS gross_myr, COALESCE(SUM(platform_fee_myr),0) AS platform_fee_myr, COALESCE(SUM(creator_payout_myr),0) AS creator_payout_myr FROM orders ${where}`,
+        params,
+      );
+      return {
+        ...(rows[0] || {}),
+        service_fee_percent: marketplaceDefaults.serviceFeePercent,
+        listing_fee_myr: marketplaceDefaults.listingFeeMyr,
+      };
     },
     async listNews() {
       const [rows] = await pool.execute("SELECT news_posts.*, users.name AS author_name FROM news_posts LEFT JOIN users ON users.id = news_posts.author_id WHERE news_posts.status = 'published' ORDER BY news_posts.id DESC");
@@ -953,6 +1036,11 @@ async function handleApi(req, res, pathname) {
     return true;
   }
 
+  if (req.method === "GET" && pathname === "/api/market/settings") {
+    sendJson(res, 200, { settings: marketplaceDefaults });
+    return true;
+  }
+
   if (req.method === "POST" && pathname === "/api/photos/verify") {
     const payload = await readJson(req);
     const photo = await db.verifyPhoto(payload.query || "");
@@ -1053,6 +1141,23 @@ async function handleApi(req, res, pathname) {
     return true;
   }
 
+  const priceMatch = pathname.match(/^\/api\/photos\/(\d+)\/pricing$/);
+  if (req.method === "PATCH" && priceMatch) {
+    const user = await currentUser(req);
+    if (!user) {
+      sendJson(res, 401, { error: "Login required." });
+      return true;
+    }
+    const payload = await readJson(req);
+    const photo = await db.updatePhotoPricing(priceMatch[1], payload, user);
+    if (!photo) {
+      sendJson(res, 403, { error: "Not allowed to update this photo." });
+      return true;
+    }
+    sendJson(res, 200, { photo });
+    return true;
+  }
+
   const statusMatch = pathname.match(/^\/api\/cms\/photos\/(\d+)\/status$/);
   if (req.method === "PATCH" && statusMatch) {
     const user = await currentUser(req);
@@ -1132,6 +1237,16 @@ async function handleApi(req, res, pathname) {
     return true;
   }
 
+  if (req.method === "GET" && pathname === "/api/cms/sales-summary") {
+    const user = await currentUser(req);
+    if (!user) {
+      sendJson(res, 401, { error: "Login required." });
+      return true;
+    }
+    sendJson(res, 200, { summary: await db.getSalesSummary(user) });
+    return true;
+  }
+
   return false;
 }
 
@@ -1189,6 +1304,8 @@ async function handleCreateBill(req, res) {
     photo_id: payload.photoId || null,
     amount_myr: amountCents / 100,
     amount_eth: Number(payload.amountEth || 0),
+    platform_fee_myr: (amountCents / 100) * (marketplaceDefaults.serviceFeePercent / 100),
+    creator_payout_myr: amountCents / 100 - (amountCents / 100) * (marketplaceDefaults.serviceFeePercent / 100),
     payment_status: "pending",
     bill_code: billCode,
   });

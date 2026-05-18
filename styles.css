@@ -2572,6 +2572,105 @@ th {
   gap: 16px;
 }
 
+.cart-layout,
+.sales-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  gap: 18px;
+  align-items: start;
+}
+
+.cart-list,
+.cart-summary {
+  display: grid;
+  gap: 12px;
+}
+
+.cart-summary {
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.cart-row {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.cart-row img {
+  width: 92px;
+  height: 72px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.cart-row span,
+.cart-row small,
+.cart-summary p,
+.nft-card .card-bottom strong span {
+  display: block;
+  color: #64748b;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.cart-row button,
+.pricing-actions button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #dbe3ef;
+  border-radius: 999px;
+  background: white;
+  color: #010066;
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.sales-strip {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.sales-strip article {
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.sales-strip span {
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.sales-strip strong {
+  display: block;
+  margin-top: 8px;
+  color: #010066;
+  font-size: 1.25rem;
+}
+
+.pricing-actions {
+  display: grid;
+  grid-template-columns: 110px auto;
+  gap: 8px;
+}
+
+.pricing-actions input {
+  min-height: 36px;
+  width: 100%;
+  padding: 0 10px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+}
+
 .management-card {
   display: grid;
   gap: 14px;
@@ -2764,17 +2863,21 @@ th {
 
   .portal-shell .dashboard-grid,
   .portal-workspace,
-  .management-grid {
+  .management-grid,
+  .cart-layout,
+  .sales-strip {
     grid-template-columns: 1fr;
   }
 
   .manager-row,
   .manager-row.compact,
-  .inline-admin-form {
+  .inline-admin-form,
+  .cart-row {
     grid-template-columns: 1fr;
   }
 
-  .manager-row img {
+  .manager-row img,
+  .cart-row img {
     width: 100%;
     height: 160px;
   }

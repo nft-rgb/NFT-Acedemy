@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=3.8.1" />
+    <link rel="stylesheet" href="styles.css?v=3.9.0" />
   </head>
   <body>
     <header class="topbar">
@@ -34,6 +34,7 @@
         <a href="#market"><span>Marketplace</span></a>
         <a href="#mint" data-page="mint"><span>Mint Foto</span></a>
         <a href="#dashboard" data-page="dashboard"><span>Semakan</span></a>
+        <a href="#cart" data-page="cart"><span>Cart</span></a>
         <a href="#news" data-page="news"><span>News</span></a>
         <a href="#dashboard" data-page="dashboard"><span>Portal</span></a>
         <a class="secondary-nav" href="#protection" data-page="protection"><span>Protect</span></a>
@@ -241,6 +242,27 @@
         </div>
       </section>
 
+      <section class="section cart-section page-section" id="cart" data-page="cart">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Shopping cart</p>
+            <h2>Cart pembelian foto</h2>
+          </div>
+        </div>
+        <div class="cart-layout">
+          <div class="cart-list" id="cartList"></div>
+          <aside class="cart-summary">
+            <span class="metric-label">Ringkasan bayaran</span>
+            <div class="checkout-row"><span>Subtotal</span><b id="cartSubtotal">RM 0.00</b></div>
+            <div class="checkout-row"><span>Service fee 6%</span><b id="cartServiceFee">RM 0.00</b></div>
+            <div class="checkout-row"><span>Total</span><b id="cartTotal">RM 0.00</b></div>
+            <p>Fee platform 6% ditolak daripada hasil jualan untuk split payment. Listing fee marketplace ialah RM2 setiap foto.</p>
+            <button class="primary-action full" id="cartCheckoutButton" type="button">Checkout cart</button>
+            <p class="form-note" id="cartNote" role="status"></p>
+          </aside>
+        </div>
+      </section>
+
       <section class="mint-panel page-section" id="mint" data-page="mint">
         <div class="mint-copy">
           <p class="eyebrow">Creator studio</p>
@@ -290,7 +312,12 @@
               Harga ETH
               <input name="price" type="number" min="0.01" step="0.01" placeholder="0.25" required />
             </label>
+            <label>
+              Harga MYR
+              <input name="price_myr" type="number" min="1" step="1" placeholder="Contoh: 250" />
+            </label>
           </div>
+          <p class="form-note">Listing fee marketplace: RM2. Service fee jualan: 6% daripada hasil jualan.</p>
           <label>
             URL gambar
             <input
@@ -474,7 +501,7 @@
         </div>
         <div class="news-layout">
           <div class="news-feed" id="newsFeed" aria-live="polite"></div>
-          <form class="news-composer" id="newsForm">
+          <form class="news-composer admin-only" id="newsForm">
             <p class="eyebrow">Admin post</p>
             <h3>Post news</h3>
             <label>
@@ -687,10 +714,16 @@
                 <p>Foto menunggu semakan admin.</p>
               </article>
               <article>
-                <span class="metric-label">Royalty</span>
-                <strong>7.5%</strong>
-                <p>Kadar royalti default untuk jualan sekunder.</p>
+                <span class="metric-label">Service Fee</span>
+                <strong id="serviceFeeMetric">6%</strong>
+                <p>Charge platform daripada hasil jualan.</p>
               </article>
+            </div>
+            <div class="sales-strip">
+              <article><span>Gross Sales</span><strong id="salesGrossMetric">RM 0.00</strong></article>
+              <article><span>Platform 6%</span><strong id="salesFeeMetric">RM 0.00</strong></article>
+              <article><span>Creator Payout</span><strong id="salesPayoutMetric">RM 0.00</strong></article>
+              <article><span>Listing Fee</span><strong id="listingFeeMyrMetric">RM 2.00</strong></article>
             </div>
 
             <div class="role-dashboard">
@@ -796,6 +829,14 @@
             <p class="form-note" id="scanNote" role="status"></p>
           </form>
           <div class="management-grid">
+            <section class="management-card" data-role-card="user">
+              <div class="table-heading">
+                <h3>My listing & pricing</h3>
+                <span>Update harga sebelum/selepas listing</span>
+              </div>
+              <div class="management-list" id="myListingList"></div>
+            </section>
+
             <section class="management-card" data-role-card="admin">
               <div class="table-heading">
                 <h3>Photo approval</h3>
@@ -994,6 +1035,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=3.8.1"></script>
+    <script src="app.js?v=3.9.0"></script>
   </body>
 </html>

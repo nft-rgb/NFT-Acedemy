@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS photos (
   creator_name VARCHAR(120) NOT NULL,
   category VARCHAR(80) NOT NULL,
   price_eth DECIMAL(12,4) NOT NULL DEFAULT 0.0000,
+  price_myr DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  listing_fee_myr DECIMAL(12,2) NOT NULL DEFAULT 2.00,
   image_url TEXT NOT NULL,
   authenticity_code VARCHAR(80) NULL UNIQUE,
   perceptual_hash VARCHAR(128) NULL,
@@ -37,6 +39,8 @@ CREATE TABLE IF NOT EXISTS orders (
   photo_id INT NULL,
   amount_myr DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   amount_eth DECIMAL(12,4) NOT NULL DEFAULT 0.0000,
+  platform_fee_myr DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  creator_payout_myr DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   payment_provider VARCHAR(40) NOT NULL DEFAULT 'ToyyibPay',
   payment_status ENUM('pending', 'paid', 'failed', 'refunded') NOT NULL DEFAULT 'pending',
   bill_code VARCHAR(80) NULL,
@@ -77,3 +81,9 @@ CREATE TABLE IF NOT EXISTS hero_slides (
 );
 
 CREATE INDEX idx_hero_slides_status ON hero_slides(status, sort_order);
+
+CREATE TABLE IF NOT EXISTS platform_settings (
+  setting_key VARCHAR(80) PRIMARY KEY,
+  setting_value VARCHAR(190) NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);

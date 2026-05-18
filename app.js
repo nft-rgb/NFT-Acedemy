@@ -181,10 +181,22 @@ const portalPhotoList = document.querySelector("#portalPhotoList");
 const portalUserList = document.querySelector("#portalUserList");
 const portalOrderList = document.querySelector("#portalOrderList");
 const portalSlideList = document.querySelector("#portalSlideList");
+const myListingList = document.querySelector("#myListingList");
 const createUserForm = document.querySelector("#createUserForm");
 const userManageNote = document.querySelector("#userManageNote");
 const slideForm = document.querySelector("#slideForm");
 const slideNote = document.querySelector("#slideNote");
+const cartList = document.querySelector("#cartList");
+const cartSubtotal = document.querySelector("#cartSubtotal");
+const cartServiceFee = document.querySelector("#cartServiceFee");
+const cartTotal = document.querySelector("#cartTotal");
+const cartCheckoutButton = document.querySelector("#cartCheckoutButton");
+const cartNote = document.querySelector("#cartNote");
+const serviceFeeMetric = document.querySelector("#serviceFeeMetric");
+const salesGrossMetric = document.querySelector("#salesGrossMetric");
+const salesFeeMetric = document.querySelector("#salesFeeMetric");
+const salesPayoutMetric = document.querySelector("#salesPayoutMetric");
+const listingFeeMyrMetric = document.querySelector("#listingFeeMyrMetric");
 
 let walletConnected = false;
 let selectedCheckoutItem = null;
@@ -193,7 +205,8 @@ let authMode = "login";
 let heroSlides = [];
 let activeSlideIndex = 0;
 let slideTimer = null;
-const ethToMyr = 15000;
+let ethToMyr = 15000;
+let cartItems = JSON.parse(localStorage.getItem("photoraCart") || "[]");
 const transactions = [
   { item: "Konvo Seri Gemilang #018", buyer: "0x92B4...A81D", payment: "Wallet", gross: 0.42, type: "primary" },
   { item: "Akad Nikah Frame #012", buyer: "guest-1042", payment: "FPX", gross: 0.27, type: "primary" },
@@ -201,8 +214,8 @@ const transactions = [
 ];
 
 const feeSettings = {
-  platformFee: 7,
-  listingFee: 0.01,
+  platformFee: 6,
+  listingFee: 2,
   secondaryShare: 2,
 };
 
@@ -250,11 +263,28 @@ function normalisePhoto(photo) {
     creator: photo.creator || photo.creator_name,
     category: photo.category,
     price: Number(photo.price || photo.price_eth || 0),
+    priceMyr: Number(photo.price_myr || Number(photo.price || photo.price_eth || 0) * ethToMyr),
+    listingFeeMyr: Number(photo.listing_fee_myr || feeSettings.listingFee),
     image: photo.image || photo.image_url,
     description: photo.description || "",
     status: photo.status || "approved",
     authenticityCode: photo.authenticity_code || "",
   };
+}
+
+async function loadSettings() {
+  try {
+    const result = await apiRequest("/api/market/settings");
+    const settings = result.settings || {};
+    feeSettings.platformFee = Number(settings.serviceFeePercent || 6);
+    feeSettings.listingFee = Number(settings.listingFeeMyr || 2);
+    ethToMyr = Number(settings.ethToMyr || ethToMyr);
+    serviceFeeMetric.textContent = `${feeSettings.platformFee}%`;
+    listingFeeMyrMetric.textContent = formatMyr(feeSettings.listingFee);
+  } catch {
+    serviceFeeMetric.textContent = "6%";
+    listingFeeMyrMetric.textContent = "RM 2.00";
+  }
 }
 
 function updateAccountUi() {
@@ -278,6 +308,9 @@ function updateAccountUi() {
       currentUser?.role === "super_admin" ||
       (currentUser?.role === "admin" && role === "admin");
     card.hidden = !allowed;
+  });
+  document.querySelectorAll(".admin-only").forEach((item) => {
+    item.hidden = !canManagePlatform();
   });
 }
 
@@ -416,6 +449,28 @@ function renderPhotoManager(photos = []) {
     : '<p class="empty-state">Belum ada photo untuk review.</p>';
 }
 
+function renderMyListings(photos = []) {
+  if (!myListingList) return;
+  const mine =
+    currentUser && ["admin", "super_admin"].includes(currentUser.role)
+      ? photos
+      : photos.filter((photo) => Number(photo.creator_id) === Number(currentUser?.id));
+  myListingList.innerHTML = mine.length
+    ? mine
+        .map(
+          (photo) => `<article class="manager-row">
+            <img src="${escapeHtml(photo.image_url)}" alt="" />
+            <div><strong>${escapeHtml(photo.title)}</strong><span>${escapeHtml(photo.status)} · ${formatMyr(Number(photo.price_myr || 0))} · ${Number(photo.price_eth || 0).toFixed(4)} ETH</span><small>Listing fee RM2. Service fee jualan 6%.</small></div>
+            <div class="pricing-actions">
+              <input type="number" min="1" step="1" value="${Number(photo.price_myr || 0)}" data-price-myr="${photo.id}" aria-label="Harga MYR" />
+              <button type="button" data-update-price="${photo.id}">Update</button>
+            </div>
+          </article>`,
+        )
+        .join("")
+    : '<p class="empty-state">Belum ada listing milik akaun ini.</p>';
+}
+
 function renderUserManager(users = []) {
   if (!portalUserList) return;
   portalUserList.innerHTML = users.length
@@ -469,6 +524,7 @@ function renderSlideList(slides = heroSlides) {
 async function loadCmsData() {
   if (!currentUser) {
     renderPhotoManager([]);
+    renderMyListings([]);
     renderUserManager([]);
     renderOrderManager([]);
     renderSlideList(heroSlides);
@@ -477,8 +533,10 @@ async function loadCmsData() {
   try {
     const photos = await apiRequest("/api/photos");
     renderPhotoManager(photos.photos || []);
+    renderMyListings(photos.photos || []);
   } catch {
     renderPhotoManager([]);
+    renderMyListings([]);
   }
   if (canManagePlatform()) {
     try {
@@ -499,6 +557,24 @@ async function loadCmsData() {
     renderUserManager([]);
   }
   await loadSlides();
+  await loadSalesSummary();
+}
+
+async function loadSalesSummary() {
+  if (!currentUser) return;
+  try {
+    const result = await apiRequest("/api/cms/sales-summary");
+    const summary = result.summary || {};
+    salesGrossMetric.textContent = formatMyr(Number(summary.gross_myr || 0));
+    salesFeeMetric.textContent = formatMyr(Number(summary.platform_fee_myr || 0));
+    salesPayoutMetric.textContent = formatMyr(Number(summary.creator_payout_myr || 0));
+    serviceFeeMetric.textContent = `${Number(summary.service_fee_percent || feeSettings.platformFee)}%`;
+    listingFeeMyrMetric.textContent = formatMyr(Number(summary.listing_fee_myr || feeSettings.listingFee));
+  } catch {
+    salesGrossMetric.textContent = formatMyr(0);
+    salesFeeMetric.textContent = formatMyr(0);
+    salesPayoutMetric.textContent = formatMyr(0);
+  }
 }
 
 function closeMobileMenu() {
@@ -508,6 +584,11 @@ function closeMobileMenu() {
 
 function showPage(page, shouldUpdateHash = true) {
   const targetPage = page || "market";
+  if (["dashboard", "cms"].includes(targetPage) && !currentUser) {
+    showToast("Login dahulu untuk buka dashboard.");
+    showPage("login", shouldUpdateHash);
+    return;
+  }
   document.body.classList.toggle("login-mode", targetPage === "login");
   pageSections.forEach((section) => {
     section.classList.toggle("active", section.dataset.page === targetPage);
@@ -552,10 +633,10 @@ function updateMetrics() {
   const creatorPayout = grossSales - platformCommission;
 
   primaryFeeLabel.textContent = `${feeSettings.platformFee}%`;
-  listingFeeLabel.textContent = `${feeSettings.listingFee.toFixed(3)} ETH`;
+  listingFeeLabel.textContent = formatMyr(feeSettings.listingFee);
   royaltyShareLabel.textContent = `${feeSettings.secondaryShare}%`;
-  platformProfitMetric.textContent = formatPrice(platformProfit);
-  ownerWalletMetric.textContent = formatPrice(platformProfit);
+  platformProfitMetric.textContent = formatMyr(platformProfit);
+  ownerWalletMetric.textContent = formatMyr(platformProfit);
   pendingPayoutMetric.textContent = formatPrice(creatorPayout);
   creatorEarningsMetric.textContent = formatPrice(creatorPayout);
   ownedMetric.textContent = transactions.length;
@@ -585,6 +666,39 @@ function renderTransactions() {
     });
     transactionTable.appendChild(row);
   });
+}
+
+function saveCart() {
+  localStorage.setItem("photoraCart", JSON.stringify(cartItems));
+}
+
+function addToCart(item) {
+  if (!cartItems.some((cartItem) => Number(cartItem.id) === Number(item.id))) {
+    cartItems.push(item);
+    saveCart();
+  }
+  renderCart();
+  showToast(`${item.title} ditambah ke cart.`);
+}
+
+function renderCart() {
+  if (!cartList) return;
+  const subtotal = cartItems.reduce((total, item) => total + Number(item.priceMyr || item.price * ethToMyr || 0), 0);
+  const fee = subtotal * (feeSettings.platformFee / 100);
+  cartSubtotal.textContent = formatMyr(subtotal);
+  cartServiceFee.textContent = formatMyr(fee);
+  cartTotal.textContent = formatMyr(subtotal);
+  cartList.innerHTML = cartItems.length
+    ? cartItems
+        .map(
+          (item) => `<article class="cart-row">
+            <img src="${escapeHtml(item.image)}" alt="" />
+            <div><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.creator)} · ${formatMyr(item.priceMyr || item.price * ethToMyr)}</span><small>Platform split: ${formatMyr((item.priceMyr || item.price * ethToMyr) * (feeSettings.platformFee / 100))} / Creator: ${formatMyr((item.priceMyr || item.price * ethToMyr) * (1 - feeSettings.platformFee / 100))}</small></div>
+            <button type="button" data-remove-cart="${item.id}">Remove</button>
+          </article>`,
+        )
+        .join("")
+    : '<p class="empty-state">Cart masih kosong. Tambah foto dari marketplace.</p>';
 }
 
 function renderCards() {
@@ -646,7 +760,7 @@ function renderCards() {
     const cardBottom = document.createElement("div");
     cardBottom.className = "card-bottom";
     const price = document.createElement("strong");
-    price.textContent = formatPrice(item.price);
+    price.innerHTML = `${formatMyr(item.priceMyr || item.price * ethToMyr)} <span>${formatPrice(item.price)}</span>`;
     const actionGroup = document.createElement("div");
     actionGroup.className = "card-actions";
     const buyButton = document.createElement("button");
@@ -671,10 +785,9 @@ function renderCards() {
     const fiatButton = document.createElement("button");
     fiatButton.type = "button";
     fiatButton.className = "fiat-button";
-    fiatButton.textContent = "Pay MYR";
+    fiatButton.textContent = "Add cart";
     fiatButton.addEventListener("click", () => {
-      selectCheckoutItem(item);
-      showToast(`${item.title} dipilih untuk bayaran MYR.`);
+      addToCart(item);
     });
 
     actionGroup.append(buyButton, fiatButton);
@@ -881,6 +994,23 @@ portalPhotoList.addEventListener("click", async (event) => {
   }
 });
 
+myListingList.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-update-price]");
+  if (!button) return;
+  const input = myListingList.querySelector(`[data-price-myr="${button.dataset.updatePrice}"]`);
+  try {
+    await apiRequest(`/api/photos/${button.dataset.updatePrice}/pricing`, {
+      method: "PATCH",
+      body: JSON.stringify({ price_myr: Number(input.value || 0), price_eth: Number(input.value || 0) / ethToMyr }),
+    });
+    await loadPhotos();
+    await loadCmsData();
+    showToast("Harga listing dikemaskini.");
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
 portalUserList.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-user-id]");
   if (!button) return;
@@ -916,6 +1046,32 @@ portalSlideList.addEventListener("click", async (event) => {
   } catch (error) {
     showToast(error.message);
   }
+});
+
+cartList.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-remove-cart]");
+  if (!button) return;
+  cartItems = cartItems.filter((item) => Number(item.id) !== Number(button.dataset.removeCart));
+  saveCart();
+  renderCart();
+});
+
+cartCheckoutButton.addEventListener("click", () => {
+  if (!cartItems.length) {
+    cartNote.textContent = "Cart masih kosong.";
+    return;
+  }
+  const subtotal = cartItems.reduce((total, item) => total + Number(item.priceMyr || item.price * ethToMyr || 0), 0);
+  selectedCheckoutItem = {
+    id: cartItems[0].id,
+    title: `Photora cart (${cartItems.length} foto)`,
+    price: subtotal / ethToMyr,
+  };
+  checkoutTitle.textContent = selectedCheckoutItem.title;
+  checkoutEth.textContent = formatPrice(selectedCheckoutItem.price);
+  checkoutMyr.textContent = formatMyr(subtotal);
+  checkoutNote.textContent = `Termasuk split platform ${feeSettings.platformFee}% dan payout creator.`;
+  showPage("checkout");
 });
 
 createUserForm.addEventListener("submit", async (event) => {
@@ -1003,6 +1159,7 @@ mintForm.addEventListener("submit", async (event) => {
         title: item.title,
         category: item.category,
         price_eth: item.price,
+        price_myr: Number(data.get("price_myr") || item.price * ethToMyr),
         image_url: item.image,
         description: data.get("description") || "",
         source_type: item.category === "Mobilegraphy" ? "mobilegraphy" : "dslr",
@@ -1019,6 +1176,7 @@ mintForm.addEventListener("submit", async (event) => {
     searchInput.value = "";
     updateMetrics();
     renderCards();
+    renderCart();
     showToast("Foto sudah dihantar ke sistem CMS.");
   } catch (error) {
     formNote.textContent = error.message;
@@ -1139,12 +1297,17 @@ tabButtons.forEach((button) => {
 
 updateMetrics();
 renderCards();
-showPage((window.location.hash || "#market").replace("#", ""), false);
 setAuthMode("login");
+loadSettings().then(() => {
+  updateMetrics();
+  renderCards();
+  renderCart();
+});
 loadSlides();
 loadSession().then(async () => {
   await loadPhotos();
   await loadCmsData();
+  showPage((window.location.hash || "#market").replace("#", ""), false);
 });
 loadCryptoPrices();
 loadNews();
