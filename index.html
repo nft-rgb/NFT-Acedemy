@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Photora NFT Marketplace</title>
+    <link rel="icon" type="image/png" href="assets/photoralogo.png" />
+    <link rel="apple-touch-icon" href="assets/photoralogo.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,8 +16,8 @@
   </head>
   <body>
     <header class="topbar">
-      <a class="brand" href="#" aria-label="Photora home">
-        <span class="brand-mark">P</span>
+      <a class="brand" href="#market" data-page="market" aria-label="Photora home">
+        <span class="brand-mark image-mark"><img src="assets/photoralogo.png" alt="" /></span>
         <span>Photora</span>
       </a>
       <button
@@ -636,12 +638,71 @@
             <p>Kadar royalti default untuk jualan sekunder.</p>
           </article>
         </div>
+        <div class="role-dashboard">
+          <div class="role-panel-heading">
+            <div>
+              <p class="eyebrow">Account control</p>
+              <h3 id="roleDashboardTitle">Dashboard pengguna</h3>
+            </div>
+            <span id="roleBadge">Guest</span>
+          </div>
+          <div class="role-dashboard-grid">
+            <form class="settings-form" id="profileForm">
+              <h3>Update profile</h3>
+              <label>
+                Nama
+                <input name="name" type="text" placeholder="Nama akaun" />
+              </label>
+              <label>
+                Telefon
+                <input name="phone" type="tel" placeholder="0100000000" />
+              </label>
+              <button class="primary-action" type="submit">Save profile</button>
+              <p class="form-note" id="profileNote" role="status"></p>
+            </form>
+            <form class="settings-form" id="walletForm">
+              <h3>Wallet crypto & cash</h3>
+              <label>
+                Wallet crypto
+                <input name="wallet_crypto" type="text" placeholder="0x... / LUNO wallet reference" />
+              </label>
+              <label>
+                Wallet cash
+                <input name="wallet_cash" type="text" placeholder="Bank / FPX payout account" />
+              </label>
+              <label>
+                LUNO wallet
+                <input name="luno_wallet" type="text" placeholder="LUNO BTC/ETH wallet label" />
+              </label>
+              <button class="primary-action" type="submit">Save wallet</button>
+              <p class="form-note" id="walletNote" role="status"></p>
+            </form>
+            <article class="crypto-panel">
+              <div class="table-heading">
+                <h3>Harga crypto semasa</h3>
+                <button class="secondary-action" id="refreshCryptoButton" type="button">Refresh</button>
+              </div>
+              <div class="crypto-price-list" id="cryptoPriceList">
+                <span>ETH: loading...</span>
+                <span>BTC: loading...</span>
+                <span>USDT: loading...</span>
+              </div>
+              <a class="luno-link" href="https://www.luno.com/en/my" target="_blank" rel="noreferrer">Buka LUNO Malaysia</a>
+            </article>
+          </div>
+          <div class="role-tools">
+            <button type="button" data-page="mint">Asset photo</button>
+            <button type="button" data-page="checkout">Wallet cash</button>
+            <button type="button" data-page="cms">CMS admin</button>
+            <button type="button" data-page="security">Security</button>
+          </div>
+        </div>
       </section>
     </main>
 
     <footer class="site-footer">
       <div class="footer-brand">
-        <span class="brand-mark">P</span>
+        <span class="brand-mark image-mark"><img src="assets/photoralogo.png" alt="" /></span>
         <div>
           <strong>Photora NFT Marketplace</strong>
           <span>Real photo NFT marketplace</span>
@@ -660,10 +721,10 @@
       <div class="footer-social">
         <span>Social</span>
         <div class="social-links" aria-label="Social media">
-          <a href="#" aria-label="Instagram">IG</a>
-          <a href="#" aria-label="X">X</a>
-          <a href="#" aria-label="LinkedIn">IN</a>
-          <a href="#" aria-label="TikTok">TT</a>
+          <a href="https://www.instagram.com/" target="_blank" rel="noreferrer" aria-label="Instagram">IG</a>
+          <a href="https://x.com/" target="_blank" rel="noreferrer" aria-label="X">X</a>
+          <a href="https://www.linkedin.com/" target="_blank" rel="noreferrer" aria-label="LinkedIn">IN</a>
+          <a href="https://www.tiktok.com/" target="_blank" rel="noreferrer" aria-label="TikTok">TT</a>
         </div>
         <a class="developer-link" href="https://nexio.my" target="_blank" rel="noreferrer">Developed by nexio.my</a>
       </div>

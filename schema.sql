@@ -5,6 +5,11 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('user', 'admin', 'super_admin') NOT NULL DEFAULT 'user',
   status ENUM('active', 'suspended') NOT NULL DEFAULT 'active',
+  phone VARCHAR(40) NULL,
+  wallet_crypto VARCHAR(190) NULL,
+  wallet_cash VARCHAR(190) NULL,
+  luno_wallet VARCHAR(190) NULL,
+  preferred_currency VARCHAR(12) NOT NULL DEFAULT 'MYR',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

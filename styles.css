@@ -56,7 +56,7 @@ img {
   top: 0;
   z-index: 20;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 12px;
   padding: 10px clamp(14px, 4vw, 44px);
@@ -97,6 +97,18 @@ img {
   border-radius: 8px;
   background: var(--blue);
   color: var(--gold);
+  overflow: hidden;
+}
+
+.brand-mark.image-mark {
+  background: transparent;
+  color: transparent;
+}
+
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .nav-links {
@@ -1136,6 +1148,93 @@ h2 {
   background: var(--surface);
 }
 
+.role-dashboard {
+  display: grid;
+  gap: 18px;
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.role-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.role-panel-heading h3 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+#roleBadge {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--blue);
+  color: white;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.role-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.crypto-panel {
+  display: grid;
+  gap: 14px;
+  min-height: 100%;
+  padding: 18px;
+  border-radius: 18px;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+}
+
+.crypto-price-list {
+  display: grid;
+  gap: 8px;
+}
+
+.crypto-price-list span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: white;
+  color: var(--text);
+  font-weight: 850;
+}
+
+.luno-link {
+  width: fit-content;
+  color: var(--blue);
+  font-weight: 900;
+}
+
+.role-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.role-tools button {
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: white;
+  color: var(--blue);
+  cursor: pointer;
+  font-weight: 850;
+}
+
 .settings-form h3,
 .table-heading h3,
 .creator-tools h3 {
@@ -1552,7 +1651,7 @@ th {
 
 @media (max-width: 980px) {
   .topbar {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto 1fr auto auto;
     justify-content: space-between;
   }
 
@@ -1605,6 +1704,7 @@ th {
   .protection-grid,
   .security-grid,
   .growth-grid,
+  .role-dashboard-grid,
   .cms-metrics,
   .portal-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1649,7 +1749,7 @@ th {
 
 @media (max-width: 720px) {
   .topbar {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto 1fr auto auto;
     justify-content: space-between;
     gap: 8px;
     padding: 10px 14px;
@@ -1663,6 +1763,12 @@ th {
     justify-content: center;
     min-height: 38px;
     padding: 0 12px;
+  }
+
+  .account-button {
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 0.84rem;
   }
 
   .menu-toggle {
@@ -1764,6 +1870,7 @@ th {
   .protection-grid,
   .security-grid,
   .growth-grid,
+  .role-dashboard-grid,
   .cms-metrics,
   .portal-grid {
     grid-template-columns: 1fr;
@@ -1793,6 +1900,13 @@ th {
     font-size: 0.86rem;
   }
 
+  .account-button {
+    max-width: 84px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   #walletText {
     max-width: 86px;
     overflow: hidden;
@@ -1820,6 +1934,7 @@ th {
   .protection-grid article,
   .security-grid article,
   .growth-grid article,
+  .role-dashboard,
   .portal-grid article,
   .cms-metrics article {
     min-height: 150px;

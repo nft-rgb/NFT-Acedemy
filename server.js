@@ -144,6 +144,11 @@ function publicUser(user) {
     email: user.email,
     role: user.role,
     status: user.status,
+    phone: user.phone || "",
+    wallet_crypto: user.wallet_crypto || "",
+    wallet_cash: user.wallet_cash || "",
+    luno_wallet: user.luno_wallet || "",
+    preferred_currency: user.preferred_currency || "MYR",
   };
 }
 
@@ -205,6 +210,11 @@ function loadLocalData() {
         password_hash: hashPassword(config.superAdminPassword),
         role: "super_admin",
         status: "active",
+        phone: "",
+        wallet_crypto: "",
+        wallet_cash: "",
+        luno_wallet: "",
+        preferred_currency: "MYR",
         created_at: new Date().toISOString(),
       },
     ],
@@ -238,6 +248,11 @@ function createLocalStore() {
         password_hash: hashPassword(input.password),
         role: input.role || "user",
         status: "active",
+        phone: "",
+        wallet_crypto: "",
+        wallet_cash: "",
+        luno_wallet: "",
+        preferred_currency: "MYR",
         created_at: new Date().toISOString(),
       };
       data.users.push(user);
@@ -246,6 +261,23 @@ function createLocalStore() {
     },
     async listUsers() {
       return data.users.map(publicUser);
+    },
+    async updateUserProfile(id, input) {
+      const user = data.users.find((item) => item.id === Number(id));
+      if (!user) return null;
+      ["name", "phone", "wallet_crypto", "wallet_cash", "luno_wallet", "preferred_currency"].forEach((key) => {
+        if (input[key] !== undefined) user[key] = String(input[key] || "").trim();
+      });
+      saveLocalData(data);
+      return user;
+    },
+    async updateUserRole(id, input) {
+      const user = data.users.find((item) => item.id === Number(id));
+      if (!user) return null;
+      if (input.role) user.role = input.role;
+      if (input.status) user.status = input.status;
+      saveLocalData(data);
+      return publicUser(user);
     },
     async listPhotos({ includePending = false } = {}) {
       return data.photos.filter((photo) => includePending || photo.status === "approved");
@@ -309,6 +341,24 @@ function createLocalStore() {
   };
 }
 
+async function ensureUserColumns(pool) {
+  const columns = [
+    ["phone", "VARCHAR(40) NULL"],
+    ["wallet_crypto", "VARCHAR(190) NULL"],
+    ["wallet_cash", "VARCHAR(190) NULL"],
+    ["luno_wallet", "VARCHAR(190) NULL"],
+    ["preferred_currency", "VARCHAR(12) NOT NULL DEFAULT 'MYR'"],
+  ];
+
+  for (const [column, definition] of columns) {
+    try {
+      await pool.query(`ALTER TABLE users ADD COLUMN ${column} ${definition}`);
+    } catch (error) {
+      if (error.code !== "ER_DUP_FIELDNAME") throw error;
+    }
+  }
+}
+
 function createMysqlStore(pool) {
   return {
     async init() {
@@ -324,6 +374,7 @@ function createMysqlStore(pool) {
           if (error.code !== "ER_DUP_KEYNAME") throw error;
         }
       }
+      await ensureUserColumns(pool);
       const [rows] = await pool.execute("SELECT id FROM users WHERE role = 'super_admin' ORDER BY id ASC LIMIT 1");
       if (rows.length === 0) {
         await pool.execute(
@@ -368,8 +419,33 @@ function createMysqlStore(pool) {
       return this.getUserById(result.insertId);
     },
     async listUsers() {
-      const [rows] = await pool.execute("SELECT id, name, email, role, status, created_at FROM users ORDER BY id DESC");
+      const [rows] = await pool.execute(
+        "SELECT id, name, email, role, status, phone, wallet_crypto, wallet_cash, luno_wallet, preferred_currency, created_at FROM users ORDER BY id DESC",
+      );
       return rows;
+    },
+    async updateUserProfile(id, input) {
+      await pool.execute(
+        "UPDATE users SET name = COALESCE(?, name), phone = ?, wallet_crypto = ?, wallet_cash = ?, luno_wallet = ?, preferred_currency = ? WHERE id = ?",
+        [
+          input.name || null,
+          input.phone || "",
+          input.wallet_crypto || "",
+          input.wallet_cash || "",
+          input.luno_wallet || "",
+          input.preferred_currency || "MYR",
+          id,
+        ],
+      );
+      return this.getUserById(id);
+    },
+    async updateUserRole(id, input) {
+      await pool.execute("UPDATE users SET role = COALESCE(?, role), status = COALESCE(?, status) WHERE id = ?", [
+        input.role || null,
+        input.status || null,
+        id,
+      ]);
+      return publicUser(await this.getUserById(id));
     },
     async listPhotos({ includePending = false } = {}) {
       const sql = includePending
@@ -502,6 +578,30 @@ async function getCategoryCode() {
   return categoryCode;
 }
 
+async function getCryptoPrices() {
+  try {
+    const response = await fetch(
+      "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,tether&vs_currencies=myr,usd",
+      { headers: { accept: "application/json" } },
+    );
+    if (!response.ok) throw new Error("Crypto price provider unavailable.");
+    const data = await response.json();
+    return {
+      BTC: { myr: data.bitcoin?.myr || 0, usd: data.bitcoin?.usd || 0, provider: "CoinGecko" },
+      ETH: { myr: data.ethereum?.myr || 0, usd: data.ethereum?.usd || 0, provider: "CoinGecko" },
+      USDT: { myr: data.tether?.myr || 0, usd: data.tether?.usd || 0, provider: "CoinGecko" },
+      walletProvider: "LUNO supported for user wallet reference",
+    };
+  } catch {
+    return {
+      BTC: { myr: 0, usd: 0, provider: "manual" },
+      ETH: { myr: 0, usd: 0, provider: "manual" },
+      USDT: { myr: 0, usd: 0, provider: "manual" },
+      walletProvider: "LUNO supported for user wallet reference",
+    };
+  }
+}
+
 async function handleAuth(req, res, pathname) {
   const db = await getStore();
 
@@ -557,6 +657,30 @@ async function handleApi(req, res, pathname) {
 
   if (await handleAuth(req, res, pathname)) return true;
 
+  if (req.method === "PATCH" && pathname === "/api/me/profile") {
+    const user = await currentUser(req);
+    if (!user) {
+      sendJson(res, 401, { error: "Login required." });
+      return true;
+    }
+    const payload = await readJson(req);
+    const updated = await db.updateUserProfile(user.id, {
+      name: payload.name,
+      phone: payload.phone,
+      wallet_crypto: payload.wallet_crypto,
+      wallet_cash: payload.wallet_cash,
+      luno_wallet: payload.luno_wallet,
+      preferred_currency: payload.preferred_currency || "MYR",
+    });
+    sendJson(res, 200, { user: publicUser(updated) });
+    return true;
+  }
+
+  if (req.method === "GET" && pathname === "/api/market/crypto-prices") {
+    sendJson(res, 200, { prices: await getCryptoPrices() });
+    return true;
+  }
+
   if (req.method === "GET" && pathname === "/api/photos") {
     const user = await currentUser(req);
     const includePending = requireRole(user, ["admin", "super_admin"]);
@@ -604,6 +728,28 @@ async function handleApi(req, res, pathname) {
       return true;
     }
     sendJson(res, 200, { users: await db.listUsers() });
+    return true;
+  }
+
+  const userRoleMatch = pathname.match(/^\/api\/cms\/users\/(\d+)$/);
+  if (req.method === "PATCH" && userRoleMatch) {
+    const user = await currentUser(req);
+    if (!requireRole(user, ["super_admin"])) {
+      sendJson(res, 403, { error: "Super admin access required." });
+      return true;
+    }
+    const payload = await readJson(req);
+    const roles = ["user", "admin", "super_admin"];
+    const statuses = ["active", "suspended"];
+    if (payload.role && !roles.includes(payload.role)) {
+      sendJson(res, 400, { error: "Invalid role." });
+      return true;
+    }
+    if (payload.status && !statuses.includes(payload.status)) {
+      sendJson(res, 400, { error: "Invalid status." });
+      return true;
+    }
+    sendJson(res, 200, { user: await db.updateUserRole(userRoleMatch[1], payload) });
     return true;
   }
 
@@ -722,6 +868,10 @@ function serveStatic(req, res) {
 
   const ext = path.extname(filePath);
   res.writeHead(200, { "Content-Type": mimeTypes[ext] || "application/octet-stream" });
+  if (req.method === "HEAD") {
+    res.end();
+    return;
+  }
   fs.createReadStream(filePath).pipe(res);
 }
 
@@ -741,7 +891,7 @@ const server = http.createServer(async (req, res) => {
 
     if (requestUrl.pathname.startsWith("/api/") && (await handleApi(req, res, requestUrl.pathname))) return;
 
-    if (req.method === "GET") {
+    if (req.method === "GET" || req.method === "HEAD") {
       serveStatic(req, res);
       return;
     }

@@ -152,6 +152,15 @@ const authNote = document.querySelector("#authNote");
 const authSubmit = document.querySelector("#authSubmit");
 const authTabs = document.querySelectorAll("[data-auth-mode]");
 const registerOnlyFields = document.querySelectorAll(".register-only");
+const profileForm = document.querySelector("#profileForm");
+const walletForm = document.querySelector("#walletForm");
+const profileNote = document.querySelector("#profileNote");
+const walletNote = document.querySelector("#walletNote");
+const roleDashboardTitle = document.querySelector("#roleDashboardTitle");
+const roleBadge = document.querySelector("#roleBadge");
+const cryptoPriceList = document.querySelector("#cryptoPriceList");
+const refreshCryptoButton = document.querySelector("#refreshCryptoButton");
+const roleTools = document.querySelectorAll(".role-tools [data-page]");
 
 let walletConnected = false;
 let selectedCheckoutItem = null;
@@ -213,6 +222,17 @@ function normalisePhoto(photo) {
 
 function updateAccountUi() {
   accountButton.textContent = currentUser ? `${currentUser.role}: ${currentUser.name}` : "Login";
+  roleBadge.textContent = currentUser?.role || "Guest";
+  roleDashboardTitle.textContent = currentUser
+    ? `Dashboard ${currentUser.role.replace("_", " ")}`
+    : "Dashboard pengguna";
+  if (currentUser && profileForm && walletForm) {
+    profileForm.elements.name.value = currentUser.name || "";
+    profileForm.elements.phone.value = currentUser.phone || "";
+    walletForm.elements.wallet_crypto.value = currentUser.wallet_crypto || "";
+    walletForm.elements.wallet_cash.value = currentUser.wallet_cash || "";
+    walletForm.elements.luno_wallet.value = currentUser.luno_wallet || "";
+  }
 }
 
 function setAuthMode(mode) {
@@ -246,6 +266,32 @@ async function loadPhotos() {
     }
   } catch {
     showToast("Guna data demo kerana database belum tersedia.");
+  }
+}
+
+function formatPriceValue(value, currency) {
+  if (!value) return "Unavailable";
+  return new Intl.NumberFormat(currency === "USD" ? "en-US" : "ms-MY", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: currency === "MYR" ? 0 : 2,
+  }).format(value);
+}
+
+async function loadCryptoPrices() {
+  if (!cryptoPriceList) return;
+  cryptoPriceList.innerHTML = "<span>Loading crypto prices...</span>";
+  try {
+    const result = await apiRequest("/api/market/crypto-prices");
+    const prices = result.prices || {};
+    cryptoPriceList.innerHTML = ["BTC", "ETH", "USDT"]
+      .map((symbol) => {
+        const item = prices[symbol] || {};
+        return `<span><b>${symbol}</b><em>${formatPriceValue(item.myr, "MYR")} / ${formatPriceValue(item.usd, "USD")}</em></span>`;
+      })
+      .join("");
+  } catch {
+    cryptoPriceList.innerHTML = "<span>Harga crypto belum tersedia.</span>";
   }
 }
 
@@ -481,6 +527,66 @@ authForm.addEventListener("submit", async (event) => {
   }
 });
 
+profileForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!currentUser) {
+    profileNote.textContent = "Login dahulu untuk update profile.";
+    authModal.hidden = false;
+    return;
+  }
+  const data = new FormData(profileForm);
+  try {
+    const result = await apiRequest("/api/me/profile", {
+      method: "PATCH",
+      body: JSON.stringify({
+        name: data.get("name"),
+        phone: data.get("phone"),
+        wallet_crypto: currentUser.wallet_crypto,
+        wallet_cash: currentUser.wallet_cash,
+        luno_wallet: currentUser.luno_wallet,
+      }),
+    });
+    currentUser = result.user;
+    updateAccountUi();
+    profileNote.textContent = "Profile dikemaskini.";
+  } catch (error) {
+    profileNote.textContent = error.message;
+  }
+});
+
+walletForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!currentUser) {
+    walletNote.textContent = "Login dahulu untuk update wallet.";
+    authModal.hidden = false;
+    return;
+  }
+  const data = new FormData(walletForm);
+  try {
+    const result = await apiRequest("/api/me/profile", {
+      method: "PATCH",
+      body: JSON.stringify({
+        name: currentUser.name,
+        phone: currentUser.phone,
+        wallet_crypto: data.get("wallet_crypto"),
+        wallet_cash: data.get("wallet_cash"),
+        luno_wallet: data.get("luno_wallet"),
+      }),
+    });
+    currentUser = result.user;
+    updateAccountUi();
+    walletNote.textContent = "Wallet dikemaskini. LUNO disokong sebagai rujukan wallet crypto.";
+  } catch (error) {
+    walletNote.textContent = error.message;
+  }
+});
+
+refreshCryptoButton.addEventListener("click", loadCryptoPrices);
+
+roleTools.forEach((button) => {
+  button.addEventListener("click", () => showPage(button.dataset.page));
+});
+
 menuToggle.addEventListener("click", () => {
   const isOpen = topbar.classList.toggle("nav-open");
   menuToggle.setAttribute("aria-expanded", String(isOpen));
@@ -674,3 +780,4 @@ renderCards();
 showPage((window.location.hash || "#market").replace("#", ""), false);
 setAuthMode("login");
 loadSession().then(loadPhotos);
+loadCryptoPrices();
