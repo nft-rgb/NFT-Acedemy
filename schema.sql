@@ -60,3 +60,20 @@ CREATE TABLE IF NOT EXISTS news_posts (
 );
 
 CREATE INDEX idx_news_status ON news_posts(status);
+
+CREATE TABLE IF NOT EXISTS hero_slides (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  eyebrow VARCHAR(120) NOT NULL,
+  title VARCHAR(180) NOT NULL,
+  body TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  primary_label VARCHAR(80) NOT NULL DEFAULT 'Teroka Marketplace',
+  primary_page VARCHAR(40) NOT NULL DEFAULT 'market',
+  secondary_label VARCHAR(80) NOT NULL DEFAULT 'Panduan Kreator',
+  secondary_page VARCHAR(40) NOT NULL DEFAULT 'mint',
+  sort_order INT NOT NULL DEFAULT 0,
+  status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_hero_slides_status ON hero_slides(status, sort_order);

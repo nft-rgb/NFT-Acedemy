@@ -168,11 +168,31 @@ const newsFeed = document.querySelector("#newsFeed");
 const newsForm = document.querySelector("#newsForm");
 const newsNote = document.querySelector("#newsNote");
 const accountTypeButtons = document.querySelectorAll(".account-type-toggle button");
+const heroSection = document.querySelector(".hero");
+const heroEyebrow = document.querySelector("#heroEyebrow");
+const heroTitle = document.querySelector("#heroTitle");
+const heroBody = document.querySelector("#heroBody");
+const heroPrimaryAction = document.querySelector("#heroPrimaryAction");
+const heroSecondaryAction = document.querySelector("#heroSecondaryAction");
+const heroDots = document.querySelector("#heroDots");
+const pendingReviewMetric = document.querySelector("#pendingReviewMetric");
+const refreshCmsButton = document.querySelector("#refreshCmsButton");
+const portalPhotoList = document.querySelector("#portalPhotoList");
+const portalUserList = document.querySelector("#portalUserList");
+const portalOrderList = document.querySelector("#portalOrderList");
+const portalSlideList = document.querySelector("#portalSlideList");
+const createUserForm = document.querySelector("#createUserForm");
+const userManageNote = document.querySelector("#userManageNote");
+const slideForm = document.querySelector("#slideForm");
+const slideNote = document.querySelector("#slideNote");
 
 let walletConnected = false;
 let selectedCheckoutItem = null;
 let currentUser = null;
 let authMode = "login";
+let heroSlides = [];
+let activeSlideIndex = 0;
+let slideTimer = null;
 const ethToMyr = 15000;
 const transactions = [
   { item: "Konvo Seri Gemilang #018", buyer: "0x92B4...A81D", payment: "Wallet", gross: 0.42, type: "primary" },
@@ -195,6 +215,15 @@ function formatMyr(price) {
     style: "currency",
     currency: "MYR",
   }).format(price);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function showToast(message) {
@@ -244,10 +273,10 @@ function updateAccountUi() {
   roleCards.forEach((card) => {
     const role = card.dataset.roleCard;
     const allowed =
-      !currentUser ||
+      (!currentUser && role === "user") ||
       role === "user" ||
-      currentUser.role === "super_admin" ||
-      (currentUser.role === "admin" && role === "admin");
+      currentUser?.role === "super_admin" ||
+      (currentUser?.role === "admin" && role === "admin");
     card.hidden = !allowed;
   });
 }
@@ -327,6 +356,149 @@ async function loadNews() {
   } catch {
     newsFeed.innerHTML = '<p class="empty-state">News belum tersedia.</p>';
   }
+}
+
+function applyHeroSlide(index) {
+  if (!heroSlides.length || !heroSection) return;
+  activeSlideIndex = (index + heroSlides.length) % heroSlides.length;
+  const slide = heroSlides[activeSlideIndex];
+  heroEyebrow.textContent = slide.eyebrow;
+  heroTitle.textContent = slide.title;
+  heroBody.textContent = slide.body;
+  heroPrimaryAction.textContent = slide.primary_label || "Teroka Marketplace";
+  heroPrimaryAction.dataset.page = slide.primary_page || "market";
+  heroPrimaryAction.href = `#${heroPrimaryAction.dataset.page}`;
+  heroSecondaryAction.textContent = slide.secondary_label || "Panduan Kreator";
+  heroSecondaryAction.dataset.page = slide.secondary_page || "mint";
+  heroSecondaryAction.href = `#${heroSecondaryAction.dataset.page}`;
+  heroSection.style.setProperty("--hero-image", `url("${String(slide.image_url).replace(/"/g, "%22")}")`);
+  heroDots.innerHTML = heroSlides
+    .map((_, dotIndex) => `<button class="${dotIndex === activeSlideIndex ? "active" : ""}" type="button" data-slide-index="${dotIndex}" aria-label="Slide ${dotIndex + 1}"></button>`)
+    .join("");
+}
+
+async function loadSlides() {
+  try {
+    const result = await apiRequest("/api/slides");
+    heroSlides = Array.isArray(result.slides) && result.slides.length ? result.slides : heroSlides;
+    applyHeroSlide(0);
+    window.clearInterval(slideTimer);
+    if (heroSlides.length > 1) {
+      slideTimer = window.setInterval(() => applyHeroSlide(activeSlideIndex + 1), 6500);
+    }
+    renderSlideList(heroSlides);
+  } catch {
+    heroSlides = [];
+  }
+}
+
+function canManagePlatform() {
+  return currentUser && ["admin", "super_admin"].includes(currentUser.role);
+}
+
+function renderPhotoManager(photos = []) {
+  if (!portalPhotoList) return;
+  const pending = photos.filter((photo) => photo.status === "pending").length;
+  pendingReviewMetric.textContent = pending;
+  portalPhotoList.innerHTML = photos.length
+    ? photos
+        .map(
+          (photo) => `<article class="manager-row">
+            <img src="${escapeHtml(photo.image_url)}" alt="" />
+            <div><strong>${escapeHtml(photo.title)}</strong><span>${escapeHtml(photo.creator_name)} · ${escapeHtml(photo.category)} · ${escapeHtml(photo.status)}</span><small>${escapeHtml(photo.authenticity_code || "")}</small></div>
+            <div class="manager-actions">
+              <button type="button" data-photo-status="approved" data-photo-id="${photo.id}">Approve</button>
+              <button type="button" data-photo-status="rejected" data-photo-id="${photo.id}">Reject</button>
+            </div>
+          </article>`,
+        )
+        .join("")
+    : '<p class="empty-state">Belum ada photo untuk review.</p>';
+}
+
+function renderUserManager(users = []) {
+  if (!portalUserList) return;
+  portalUserList.innerHTML = users.length
+    ? users
+        .map(
+          (user) => `<article class="manager-row compact">
+            <div><strong>${escapeHtml(user.name)}</strong><span>${escapeHtml(user.email)} · ${escapeHtml(user.role)} · ${escapeHtml(user.status)}</span></div>
+            <div class="manager-actions">
+              <button type="button" data-user-role="user" data-user-id="${user.id}">User</button>
+              <button type="button" data-user-role="admin" data-user-id="${user.id}">Admin</button>
+              <button type="button" data-user-status="${user.status === "active" ? "suspended" : "active"}" data-user-id="${user.id}">${user.status === "active" ? "Suspend" : "Activate"}</button>
+            </div>
+          </article>`,
+        )
+        .join("")
+    : '<p class="empty-state">Login sebagai super admin untuk lihat user.</p>';
+}
+
+function renderOrderManager(orders = []) {
+  if (!portalOrderList) return;
+  portalOrderList.innerHTML = orders.length
+    ? orders
+        .map(
+          (order) => `<article class="manager-row compact">
+            <div><strong>${escapeHtml(order.photo_title || order.order_ref)}</strong><span>${escapeHtml(order.payment_provider)} · ${escapeHtml(order.payment_status)} · RM ${Number(order.amount_myr || 0).toFixed(2)}</span></div>
+            <small>${escapeHtml(order.buyer_email || "Guest buyer")}</small>
+          </article>`,
+        )
+        .join("")
+    : '<p class="empty-state">Belum ada order direkodkan.</p>';
+}
+
+function renderSlideList(slides = heroSlides) {
+  if (!portalSlideList) return;
+  portalSlideList.innerHTML = slides.length
+    ? slides
+        .map(
+          (slide, index) => `<article class="manager-row">
+            <img src="${escapeHtml(slide.image_url)}" alt="" />
+            <div><strong>${escapeHtml(slide.title)}</strong><span>${escapeHtml(slide.eyebrow)} · ${escapeHtml(slide.status || "active")}</span></div>
+            <div class="manager-actions">
+              <button type="button" data-preview-slide="${index}">Preview</button>
+              <button type="button" data-slide-status="${slide.status === "active" ? "inactive" : "active"}" data-slide-id="${slide.id}">${slide.status === "active" ? "Hide" : "Show"}</button>
+            </div>
+          </article>`,
+        )
+        .join("")
+    : '<p class="empty-state">Belum ada slider.</p>';
+}
+
+async function loadCmsData() {
+  if (!currentUser) {
+    renderPhotoManager([]);
+    renderUserManager([]);
+    renderOrderManager([]);
+    renderSlideList(heroSlides);
+    return;
+  }
+  try {
+    const photos = await apiRequest("/api/photos");
+    renderPhotoManager(photos.photos || []);
+  } catch {
+    renderPhotoManager([]);
+  }
+  if (canManagePlatform()) {
+    try {
+      const orders = await apiRequest("/api/cms/orders");
+      renderOrderManager(orders.orders || []);
+    } catch {
+      renderOrderManager([]);
+    }
+  }
+  if (currentUser.role === "super_admin") {
+    try {
+      const users = await apiRequest("/api/cms/users");
+      renderUserManager(users.users || []);
+    } catch {
+      renderUserManager([]);
+    }
+  } else {
+    renderUserManager([]);
+  }
+  await loadSlides();
 }
 
 function closeMobileMenu() {
@@ -556,6 +728,7 @@ authForm.addEventListener("submit", async (event) => {
     authForm.reset();
     showToast(`Login sebagai ${currentUser.role}.`);
     await loadPhotos();
+    await loadCmsData();
     showPage("dashboard");
   } catch (error) {
     authNote.textContent = error.message;
@@ -617,6 +790,13 @@ walletForm.addEventListener("submit", async (event) => {
 });
 
 refreshCryptoButton.addEventListener("click", loadCryptoPrices);
+refreshCmsButton.addEventListener("click", loadCmsData);
+
+heroDots.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-slide-index]");
+  if (!button) return;
+  applyHeroSlide(Number(button.dataset.slideIndex));
+});
 
 roleTools.forEach((button) => {
   button.addEventListener("click", () => showPage(button.dataset.page));
@@ -683,6 +863,104 @@ accountTypeButtons.forEach((button) => {
     accountTypeButtons.forEach((item) => item.classList.remove("active"));
     button.classList.add("active");
   });
+});
+
+portalPhotoList.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-photo-id]");
+  if (!button) return;
+  try {
+    await apiRequest(`/api/cms/photos/${button.dataset.photoId}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: button.dataset.photoStatus }),
+    });
+    await loadPhotos();
+    await loadCmsData();
+    showToast("Status photo dikemaskini.");
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+portalUserList.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-user-id]");
+  if (!button) return;
+  const payload = button.dataset.userRole ? { role: button.dataset.userRole } : { status: button.dataset.userStatus };
+  try {
+    await apiRequest(`/api/cms/users/${button.dataset.userId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+    await loadCmsData();
+    showToast("User dikemaskini.");
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+portalSlideList.addEventListener("click", async (event) => {
+  const preview = event.target.closest("[data-preview-slide]");
+  if (preview) {
+    applyHeroSlide(Number(preview.dataset.previewSlide));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+  const statusButton = event.target.closest("[data-slide-id]");
+  if (!statusButton) return;
+  try {
+    await apiRequest(`/api/cms/slides/${statusButton.dataset.slideId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: statusButton.dataset.slideStatus }),
+    });
+    await loadSlides();
+    showToast("Slider dikemaskini.");
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+createUserForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (currentUser?.role !== "super_admin") {
+    userManageNote.textContent = "Login sebagai super admin untuk cipta admin/user.";
+    return;
+  }
+  const data = new FormData(createUserForm);
+  try {
+    await apiRequest("/api/cms/users", {
+      method: "POST",
+      body: JSON.stringify({
+        name: data.get("name"),
+        email: data.get("email"),
+        password: data.get("password"),
+        role: data.get("role"),
+      }),
+    });
+    createUserForm.reset();
+    userManageNote.textContent = "User berjaya dicipta.";
+    await loadCmsData();
+  } catch (error) {
+    userManageNote.textContent = error.message;
+  }
+});
+
+slideForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!canManagePlatform()) {
+    slideNote.textContent = "Login sebagai admin atau super admin untuk update slider.";
+    return;
+  }
+  const data = new FormData(slideForm);
+  try {
+    await apiRequest("/api/cms/slides", {
+      method: "POST",
+      body: JSON.stringify(Object.fromEntries(data.entries())),
+    });
+    slideForm.reset();
+    slideNote.textContent = "Slider hadapan berjaya dipublish.";
+    await loadSlides();
+  } catch (error) {
+    slideNote.textContent = error.message;
+  }
 });
 
 searchInput.addEventListener("input", renderCards);
@@ -863,6 +1141,10 @@ updateMetrics();
 renderCards();
 showPage((window.location.hash || "#market").replace("#", ""), false);
 setAuthMode("login");
-loadSession().then(loadPhotos);
+loadSlides();
+loadSession().then(async () => {
+  await loadPhotos();
+  await loadCmsData();
+});
 loadCryptoPrices();
 loadNews();

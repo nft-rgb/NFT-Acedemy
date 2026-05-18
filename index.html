@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=3.7.0" />
+    <link rel="stylesheet" href="styles.css?v=3.8.0" />
   </head>
   <body>
     <header class="topbar">
@@ -51,22 +51,18 @@
     <main>
       <section class="hero page-section active" data-page="market">
         <div class="hero-copy">
-          <p class="hero-badge">Platform foto NFT rasmi</p>
-          <h1>Meraikan Foto Asli, Mengiktiraf Kreator.</h1>
-          <p class="hero-text">
+          <p class="hero-badge" id="heroEyebrow">Platform foto NFT rasmi</p>
+          <h1 id="heroTitle">Meraikan Foto Asli, Mengiktiraf Kreator.</h1>
+          <p class="hero-text" id="heroBody">
             Photora NFT Marketplace membantu jurugambar DSLR dan mobilegraphy menjual foto
             sebenar sebagai aset digital yang boleh disahkan. Foto janaan AI dan manipulasi
             berat tidak diterima.
           </p>
           <div class="hero-actions">
-            <a class="primary-action" href="#market" data-page="market">Teroka Marketplace</a>
-            <a class="secondary-action glass-action" href="#mint" data-page="mint">Panduan Kreator</a>
+            <a class="primary-action" id="heroPrimaryAction" href="#market" data-page="market">Teroka Marketplace</a>
+            <a class="secondary-action glass-action" id="heroSecondaryAction" href="#mint" data-page="mint">Panduan Kreator</a>
           </div>
-          <div class="hero-dots" aria-hidden="true">
-            <span class="active"></span>
-            <span></span>
-            <span></span>
-          </div>
+          <div class="hero-dots" id="heroDots" aria-label="Hero slider controls"></div>
         </div>
       </section>
 
@@ -687,7 +683,7 @@
               </article>
               <article>
                 <span class="metric-label">Pending Review</span>
-                <strong>14</strong>
+                <strong id="pendingReviewMetric">0</strong>
                 <p>Foto menunggu semakan admin.</p>
               </article>
               <article>
@@ -799,6 +795,77 @@
             <button class="primary-action" type="submit">Scan photo</button>
             <p class="form-note" id="scanNote" role="status"></p>
           </form>
+          <div class="management-grid">
+            <section class="management-card" data-role-card="admin">
+              <div class="table-heading">
+                <h3>Photo approval</h3>
+                <button class="secondary-action" id="refreshCmsButton" type="button">Refresh data</button>
+              </div>
+              <div class="management-list" id="portalPhotoList"></div>
+            </section>
+
+            <section class="management-card" data-role-card="super_admin">
+              <div class="table-heading">
+                <h3>User, admin & super admin</h3>
+                <span>Super admin only</span>
+              </div>
+              <form class="inline-admin-form" id="createUserForm">
+                <input name="name" type="text" placeholder="Nama" required />
+                <input name="email" type="email" placeholder="email@domain.com" required />
+                <input name="password" type="password" placeholder="Password" required />
+                <select name="role">
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                  <option value="super_admin">Super admin</option>
+                </select>
+                <button class="primary-action" type="submit">Create user</button>
+              </form>
+              <p class="form-note" id="userManageNote" role="status"></p>
+              <div class="management-list" id="portalUserList"></div>
+            </section>
+
+            <section class="management-card" data-role-card="admin">
+              <div class="table-heading">
+                <h3>Orders & payment</h3>
+                <span>ToyyibPay / wallet</span>
+              </div>
+              <div class="management-list" id="portalOrderList"></div>
+            </section>
+
+            <section class="management-card" data-role-card="admin">
+              <div class="table-heading">
+                <h3>Hero slider</h3>
+                <span>Front page content</span>
+              </div>
+              <form class="slider-form" id="slideForm">
+                <input name="eyebrow" type="text" placeholder="Label kecil" required />
+                <input name="title" type="text" placeholder="Tajuk slider" required />
+                <textarea name="body" rows="3" placeholder="Deskripsi ringkas" required></textarea>
+                <input name="image_url" type="url" placeholder="Image URL NFT photo" required />
+                <div class="form-row">
+                  <input name="primary_label" type="text" placeholder="Button utama" value="Teroka Marketplace" />
+                  <select name="primary_page">
+                    <option value="market">Marketplace</option>
+                    <option value="mint">Mint</option>
+                    <option value="dashboard">Portal</option>
+                    <option value="news">News</option>
+                  </select>
+                </div>
+                <div class="form-row">
+                  <input name="secondary_label" type="text" placeholder="Button kedua" value="Panduan Kreator" />
+                  <select name="secondary_page">
+                    <option value="mint">Mint</option>
+                    <option value="market">Marketplace</option>
+                    <option value="dashboard">Portal</option>
+                    <option value="news">News</option>
+                  </select>
+                </div>
+                <button class="primary-action full" type="submit">Publish slide</button>
+                <p class="form-note" id="slideNote" role="status"></p>
+              </form>
+              <div class="management-list" id="portalSlideList"></div>
+            </section>
+          </div>
             </div>
           </div>
         </div>
@@ -927,6 +994,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=3.7.0"></script>
+    <script src="app.js?v=3.8.0"></script>
   </body>
 </html>

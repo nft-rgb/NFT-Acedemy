@@ -83,6 +83,48 @@ const seedPhotos = [
   },
 ];
 
+const seedSlides = [
+  {
+    eyebrow: "Platform foto NFT rasmi",
+    title: "Meraikan Foto Asli, Mengiktiraf Kreator.",
+    body:
+      "Photora NFT Marketplace membantu jurugambar DSLR dan mobilegraphy menjual foto sebenar sebagai aset digital yang boleh disahkan.",
+    image_url: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=2200&q=84",
+    primary_label: "Teroka Marketplace",
+    primary_page: "market",
+    secondary_label: "Panduan Kreator",
+    secondary_page: "mint",
+    sort_order: 1,
+    status: "active",
+  },
+  {
+    eyebrow: "NFT photo drop",
+    title: "Jual koleksi konvokesyen, event dan mobilegraphy.",
+    body:
+      "Creator boleh upload foto, admin semak keaslian, dan buyer boleh bayar dengan wallet atau ToyyibPay.",
+    image_url: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=2200&q=84",
+    primary_label: "Mint Foto",
+    primary_page: "mint",
+    secondary_label: "Semak Keaslian",
+    secondary_page: "dashboard",
+    sort_order: 2,
+    status: "active",
+  },
+  {
+    eyebrow: "Verified real photo",
+    title: "Setiap foto ada kod keaslian Photora.",
+    body:
+      "Marketplace ini fokus kepada foto sebenar daripada kamera DSLR dan mobile phone, bukan gambar AI atau manipulasi berat.",
+    image_url: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=2200&q=84",
+    primary_label: "Discover",
+    primary_page: "market",
+    secondary_label: "Portal",
+    secondary_page: "dashboard",
+    sort_order: 3,
+    status: "active",
+  },
+];
+
 function sendJson(res, statusCode, payload, extraHeaders = {}) {
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
@@ -212,8 +254,14 @@ function loadLocalData() {
         created_at: new Date().toISOString(),
       },
     ];
+    data.slides ||= seedSlides.map((slide, index) => ({
+      id: index + 1,
+      created_at: new Date().toISOString(),
+      ...slide,
+    }));
     data.counters ||= {};
     data.counters.news ||= data.news.length;
+    data.counters.slides ||= data.slides.length;
     const superAdmin = data.users.find((user) => user.role === "super_admin");
     if (superAdmin && superAdmin.email !== config.superAdminEmail) {
       superAdmin.email = config.superAdminEmail;
@@ -222,7 +270,7 @@ function loadLocalData() {
     return data;
   }
   const data = {
-    counters: { users: 1, photos: seedPhotos.length, orders: 0, news: 1 },
+    counters: { users: 1, photos: seedPhotos.length, orders: 0, news: 1, slides: seedSlides.length },
     users: [
       {
         id: 1,
@@ -251,6 +299,11 @@ function loadLocalData() {
         created_at: new Date().toISOString(),
       },
     ],
+    slides: seedSlides.map((slide, index) => ({
+      id: index + 1,
+      created_at: new Date().toISOString(),
+      ...slide,
+    })),
   };
   fs.writeFileSync(localDataPath, JSON.stringify(data, null, 2));
   return data;
@@ -395,6 +448,40 @@ function createLocalStore() {
       saveLocalData(data);
       return post;
     },
+    async listSlides({ includeInactive = false } = {}) {
+      return data.slides
+        .filter((slide) => includeInactive || slide.status === "active")
+        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0) || Number(a.id) - Number(b.id));
+    },
+    async createSlide(input) {
+      const slide = {
+        id: (data.counters.slides = (data.counters.slides || data.slides.length || 0) + 1),
+        eyebrow: input.eyebrow,
+        title: input.title,
+        body: input.body,
+        image_url: input.image_url,
+        primary_label: input.primary_label || "Teroka Marketplace",
+        primary_page: input.primary_page || "market",
+        secondary_label: input.secondary_label || "Panduan Kreator",
+        secondary_page: input.secondary_page || "mint",
+        sort_order: Number(input.sort_order || data.slides.length + 1),
+        status: input.status || "active",
+        created_at: new Date().toISOString(),
+      };
+      data.slides.push(slide);
+      saveLocalData(data);
+      return slide;
+    },
+    async updateSlide(id, input) {
+      const slide = data.slides.find((item) => item.id === Number(id));
+      if (!slide) return null;
+      ["eyebrow", "title", "body", "image_url", "primary_label", "primary_page", "secondary_label", "secondary_page", "status"].forEach((key) => {
+        if (input[key] !== undefined) slide[key] = String(input[key] || "").trim();
+      });
+      if (input.sort_order !== undefined) slide.sort_order = Number(input.sort_order || 0);
+      saveLocalData(data);
+      return slide;
+    },
   };
 }
 
@@ -449,6 +536,28 @@ async function seedNews(pool) {
   ]);
 }
 
+async function seedHeroSlides(pool) {
+  const [rows] = await pool.execute("SELECT id FROM hero_slides LIMIT 1");
+  if (rows.length > 0) return;
+  for (const slide of seedSlides) {
+    await pool.execute(
+      "INSERT INTO hero_slides (eyebrow, title, body, image_url, primary_label, primary_page, secondary_label, secondary_page, sort_order, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        slide.eyebrow,
+        slide.title,
+        slide.body,
+        slide.image_url,
+        slide.primary_label,
+        slide.primary_page,
+        slide.secondary_label,
+        slide.secondary_page,
+        slide.sort_order,
+        slide.status,
+      ],
+    );
+  }
+}
+
 function createMysqlStore(pool) {
   return {
     async init() {
@@ -467,6 +576,7 @@ function createMysqlStore(pool) {
       await ensureUserColumns(pool);
       await backfillPhotoAuthenticity(pool);
       await seedNews(pool);
+      await seedHeroSlides(pool);
       const [rows] = await pool.execute("SELECT id FROM users WHERE role = 'super_admin' ORDER BY id ASC LIMIT 1");
       if (rows.length === 0) {
         await pool.execute(
@@ -623,6 +733,52 @@ function createMysqlStore(pool) {
         input.body,
       ]);
       const [rows] = await pool.execute("SELECT * FROM news_posts WHERE id = ? LIMIT 1", [result.insertId]);
+      return rows[0] || null;
+    },
+    async listSlides({ includeInactive = false } = {}) {
+      const sql = includeInactive
+        ? "SELECT * FROM hero_slides ORDER BY sort_order ASC, id ASC"
+        : "SELECT * FROM hero_slides WHERE status = 'active' ORDER BY sort_order ASC, id ASC";
+      const [rows] = await pool.execute(sql);
+      return rows;
+    },
+    async createSlide(input) {
+      const [result] = await pool.execute(
+        "INSERT INTO hero_slides (eyebrow, title, body, image_url, primary_label, primary_page, secondary_label, secondary_page, sort_order, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          input.eyebrow,
+          input.title,
+          input.body,
+          input.image_url,
+          input.primary_label || "Teroka Marketplace",
+          input.primary_page || "market",
+          input.secondary_label || "Panduan Kreator",
+          input.secondary_page || "mint",
+          Number(input.sort_order || 0),
+          input.status || "active",
+        ],
+      );
+      const [rows] = await pool.execute("SELECT * FROM hero_slides WHERE id = ? LIMIT 1", [result.insertId]);
+      return rows[0] || null;
+    },
+    async updateSlide(id, input) {
+      await pool.execute(
+        "UPDATE hero_slides SET eyebrow = COALESCE(?, eyebrow), title = COALESCE(?, title), body = COALESCE(?, body), image_url = COALESCE(?, image_url), primary_label = COALESCE(?, primary_label), primary_page = COALESCE(?, primary_page), secondary_label = COALESCE(?, secondary_label), secondary_page = COALESCE(?, secondary_page), sort_order = COALESCE(?, sort_order), status = COALESCE(?, status) WHERE id = ?",
+        [
+          input.eyebrow || null,
+          input.title || null,
+          input.body || null,
+          input.image_url || null,
+          input.primary_label || null,
+          input.primary_page || null,
+          input.secondary_label || null,
+          input.secondary_page || null,
+          input.sort_order === undefined ? null : Number(input.sort_order),
+          input.status || null,
+          id,
+        ],
+      );
+      const [rows] = await pool.execute("SELECT * FROM hero_slides WHERE id = ? LIMIT 1", [id]);
       return rows[0] || null;
     },
   };
@@ -836,6 +992,44 @@ async function handleApi(req, res, pathname) {
     return true;
   }
 
+  if (req.method === "GET" && pathname === "/api/slides") {
+    const user = await currentUser(req);
+    const includeInactive = requireRole(user, ["admin", "super_admin"]);
+    sendJson(res, 200, { slides: await db.listSlides({ includeInactive }) });
+    return true;
+  }
+
+  if (req.method === "POST" && pathname === "/api/cms/slides") {
+    const user = await currentUser(req);
+    if (!requireRole(user, ["admin", "super_admin"])) {
+      sendJson(res, 403, { error: "Admin access required." });
+      return true;
+    }
+    const payload = await readJson(req);
+    if (!payload.eyebrow || !payload.title || !payload.body || !payload.image_url) {
+      sendJson(res, 400, { error: "Eyebrow, title, body and image URL are required." });
+      return true;
+    }
+    sendJson(res, 201, { slide: await db.createSlide(payload) });
+    return true;
+  }
+
+  const slideMatch = pathname.match(/^\/api\/cms\/slides\/(\d+)$/);
+  if (req.method === "PATCH" && slideMatch) {
+    const user = await currentUser(req);
+    if (!requireRole(user, ["admin", "super_admin"])) {
+      sendJson(res, 403, { error: "Admin access required." });
+      return true;
+    }
+    const payload = await readJson(req);
+    if (payload.status && !["active", "inactive"].includes(payload.status)) {
+      sendJson(res, 400, { error: "Invalid slide status." });
+      return true;
+    }
+    sendJson(res, 200, { slide: await db.updateSlide(slideMatch[1], payload) });
+    return true;
+  }
+
   if (req.method === "GET" && pathname === "/api/photos") {
     const user = await currentUser(req);
     const includePending = requireRole(user, ["admin", "super_admin"]);
@@ -883,6 +1077,26 @@ async function handleApi(req, res, pathname) {
       return true;
     }
     sendJson(res, 200, { users: await db.listUsers() });
+    return true;
+  }
+
+  if (req.method === "POST" && pathname === "/api/cms/users") {
+    const user = await currentUser(req);
+    if (!requireRole(user, ["super_admin"])) {
+      sendJson(res, 403, { error: "Super admin access required." });
+      return true;
+    }
+    const payload = await readJson(req);
+    const roles = ["user", "admin", "super_admin"];
+    if (!payload.name || !payload.email || !payload.password || !roles.includes(payload.role || "user")) {
+      sendJson(res, 400, { error: "Name, email, password and valid role are required." });
+      return true;
+    }
+    if (await db.getUserByEmail(payload.email)) {
+      sendJson(res, 409, { error: "Email already registered." });
+      return true;
+    }
+    sendJson(res, 201, { user: publicUser(await db.createUser(payload)) });
     return true;
   }
 

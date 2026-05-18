@@ -2164,7 +2164,7 @@ th {
   padding: clamp(72px, 9vw, 132px) clamp(20px, 5vw, 64px);
   background:
     linear-gradient(90deg, rgba(7, 13, 55, 0.9) 0%, rgba(15, 23, 70, 0.78) 44%, rgba(184, 55, 45, 0.48) 100%),
-    url("https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=2200&q=84") center / cover;
+    var(--hero-image, url("https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=2200&q=84")) center / cover;
   color: white;
 }
 
@@ -2223,14 +2223,16 @@ th {
   margin-top: clamp(52px, 8vw, 92px);
 }
 
-.hero-dots span {
+.hero-dots button {
   width: 14px;
   height: 14px;
+  border: 0;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.42);
+  cursor: pointer;
 }
 
-.hero-dots span.active {
+.hero-dots button.active {
   width: 52px;
   background: white;
 }
@@ -2556,6 +2558,116 @@ th {
   background: #4f46e5;
 }
 
+.management-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.management-card {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.management-list {
+  display: grid;
+  gap: 10px;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.manager-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #eef2f7;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.manager-row.compact {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.manager-row img {
+  width: 72px;
+  height: 58px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.manager-row div {
+  min-width: 0;
+}
+
+.manager-row strong,
+.manager-row span,
+.manager-row small {
+  display: block;
+}
+
+.manager-row span,
+.manager-row small {
+  color: #64748b;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.manager-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: end;
+}
+
+.manager-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #dbe3ef;
+  border-radius: 999px;
+  background: #fff;
+  color: #010066;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.inline-admin-form,
+.slider-form {
+  display: grid;
+  gap: 10px;
+}
+
+.inline-admin-form {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+}
+
+.inline-admin-form input,
+.inline-admin-form select,
+.slider-form input,
+.slider-form select,
+.slider-form textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #dbe3ef;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.slider-form textarea {
+  min-height: 92px;
+  padding-top: 12px;
+  resize: vertical;
+}
+
 @media (max-width: 1100px) {
   .portal-shell {
     grid-template-columns: 1fr;
@@ -2643,8 +2755,24 @@ th {
   }
 
   .portal-shell .dashboard-grid,
-  .portal-workspace {
+  .portal-workspace,
+  .management-grid {
     grid-template-columns: 1fr;
+  }
+
+  .manager-row,
+  .manager-row.compact,
+  .inline-admin-form {
+    grid-template-columns: 1fr;
+  }
+
+  .manager-row img {
+    width: 100%;
+    height: 160px;
+  }
+
+  .manager-actions {
+    justify-content: start;
   }
 
   .auth-page {
