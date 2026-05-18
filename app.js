@@ -164,6 +164,9 @@ const roleTools = document.querySelectorAll(".role-tools [data-page]");
 const roleCards = document.querySelectorAll("[data-role-card]");
 const scanForm = document.querySelector("#scanForm");
 const scanNote = document.querySelector("#scanNote");
+const newsFeed = document.querySelector("#newsFeed");
+const newsForm = document.querySelector("#newsForm");
+const newsNote = document.querySelector("#newsNote");
 
 let walletConnected = false;
 let selectedCheckoutItem = null;
@@ -308,6 +311,23 @@ async function loadCryptoPrices() {
   }
 }
 
+async function loadNews() {
+  if (!newsFeed) return;
+  try {
+    const result = await apiRequest("/api/news");
+    const posts = result.posts || [];
+    newsFeed.innerHTML = posts.length
+      ? posts
+          .map(
+            (post) => `<article class="news-card"><span>${new Date(post.created_at).toLocaleDateString("ms-MY")}</span><h3>${post.title}</h3><p>${post.body}</p></article>`,
+          )
+          .join("")
+      : '<p class="empty-state">Belum ada news platform.</p>';
+  } catch {
+    newsFeed.innerHTML = '<p class="empty-state">News belum tersedia.</p>';
+  }
+}
+
 function closeMobileMenu() {
   topbar.classList.remove("nav-open");
   menuToggle.setAttribute("aria-expanded", "false");
@@ -315,6 +335,7 @@ function closeMobileMenu() {
 
 function showPage(page, shouldUpdateHash = true) {
   const targetPage = page || "market";
+  document.body.classList.toggle("login-mode", targetPage === "login");
   pageSections.forEach((section) => {
     section.classList.toggle("active", section.dataset.page === targetPage);
   });
@@ -600,6 +621,27 @@ roleTools.forEach((button) => {
   button.addEventListener("click", () => showPage(button.dataset.page));
 });
 
+newsForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!currentUser || !["admin", "super_admin"].includes(currentUser.role)) {
+    newsNote.textContent = "Hanya admin atau super admin boleh post news.";
+    showPage("login");
+    return;
+  }
+  const data = new FormData(newsForm);
+  try {
+    await apiRequest("/api/news", {
+      method: "POST",
+      body: JSON.stringify({ title: data.get("title"), body: data.get("body") }),
+    });
+    newsForm.reset();
+    newsNote.textContent = "News berjaya dipublish.";
+    await loadNews();
+  } catch (error) {
+    newsNote.textContent = error.message;
+  }
+});
+
 scanForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const query = new FormData(scanForm).get("query");
@@ -811,3 +853,4 @@ showPage((window.location.hash || "#market").replace("#", ""), false);
 setAuthMode("login");
 loadSession().then(loadPhotos);
 loadCryptoPrices();
+loadNews();

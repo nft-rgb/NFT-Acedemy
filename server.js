@@ -202,6 +202,18 @@ async function optionalMysql() {
 function loadLocalData() {
   if (fs.existsSync(localDataPath)) {
     const data = JSON.parse(fs.readFileSync(localDataPath, "utf8"));
+    data.news ||= [
+      {
+        id: 1,
+        author_id: 1,
+        title: "Photora portal kini menyokong photo authenticity scan",
+        body: "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
+        status: "published",
+        created_at: new Date().toISOString(),
+      },
+    ];
+    data.counters ||= {};
+    data.counters.news ||= data.news.length;
     const superAdmin = data.users.find((user) => user.role === "super_admin");
     if (superAdmin && superAdmin.email !== config.superAdminEmail) {
       superAdmin.email = config.superAdminEmail;
@@ -210,7 +222,7 @@ function loadLocalData() {
     return data;
   }
   const data = {
-    counters: { users: 1, photos: seedPhotos.length, orders: 0 },
+    counters: { users: 1, photos: seedPhotos.length, orders: 0, news: 1 },
     users: [
       {
         id: 1,
@@ -229,6 +241,16 @@ function loadLocalData() {
     ],
     photos: seedPhotos.map((photo, index) => ({ id: index + 1, creator_id: null, created_at: new Date().toISOString(), ...photo })),
     orders: [],
+    news: [
+      {
+        id: 1,
+        author_id: 1,
+        title: "Photora portal kini menyokong photo authenticity scan",
+        body: "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
+        status: "published",
+        created_at: new Date().toISOString(),
+      },
+    ],
   };
   fs.writeFileSync(localDataPath, JSON.stringify(data, null, 2));
   return data;
@@ -357,6 +379,22 @@ function createLocalStore() {
     async listOrders() {
       return data.orders;
     },
+    async listNews() {
+      return data.news.filter((post) => post.status === "published").sort((a, b) => b.id - a.id);
+    },
+    async createNews(input, user) {
+      const post = {
+        id: (data.counters.news = (data.counters.news || data.news.length || 0) + 1),
+        author_id: user.id,
+        title: input.title,
+        body: input.body,
+        status: "published",
+        created_at: new Date().toISOString(),
+      };
+      data.news.unshift(post);
+      saveLocalData(data);
+      return post;
+    },
   };
 }
 
@@ -400,6 +438,17 @@ async function backfillPhotoAuthenticity(pool) {
   }
 }
 
+async function seedNews(pool) {
+  const [rows] = await pool.execute("SELECT id FROM news_posts LIMIT 1");
+  if (rows.length > 0) return;
+  const [users] = await pool.execute("SELECT id FROM users WHERE role = 'super_admin' ORDER BY id ASC LIMIT 1");
+  await pool.execute("INSERT INTO news_posts (author_id, title, body, status) VALUES (?, ?, ?, 'published')", [
+    users[0]?.id || null,
+    "Photora portal kini menyokong photo authenticity scan",
+    "Setiap foto berdaftar mempunyai kod khas Photora untuk semakan keaslian.",
+  ]);
+}
+
 function createMysqlStore(pool) {
   return {
     async init() {
@@ -417,6 +466,7 @@ function createMysqlStore(pool) {
       }
       await ensureUserColumns(pool);
       await backfillPhotoAuthenticity(pool);
+      await seedNews(pool);
       const [rows] = await pool.execute("SELECT id FROM users WHERE role = 'super_admin' ORDER BY id ASC LIMIT 1");
       if (rows.length === 0) {
         await pool.execute(
@@ -561,6 +611,19 @@ function createMysqlStore(pool) {
         "SELECT orders.*, photos.title AS photo_title, users.email AS buyer_email FROM orders LEFT JOIN photos ON photos.id = orders.photo_id LEFT JOIN users ON users.id = orders.buyer_id ORDER BY orders.id DESC",
       );
       return rows;
+    },
+    async listNews() {
+      const [rows] = await pool.execute("SELECT news_posts.*, users.name AS author_name FROM news_posts LEFT JOIN users ON users.id = news_posts.author_id WHERE news_posts.status = 'published' ORDER BY news_posts.id DESC");
+      return rows;
+    },
+    async createNews(input, user) {
+      const [result] = await pool.execute("INSERT INTO news_posts (author_id, title, body, status) VALUES (?, ?, ?, 'published')", [
+        user.id,
+        input.title,
+        input.body,
+      ]);
+      const [rows] = await pool.execute("SELECT * FROM news_posts WHERE id = ? LIMIT 1", [result.insertId]);
+      return rows[0] || null;
     },
   };
 }
@@ -750,6 +813,26 @@ async function handleApi(req, res, pathname) {
           }
         : null,
     });
+    return true;
+  }
+
+  if (req.method === "GET" && pathname === "/api/news") {
+    sendJson(res, 200, { posts: await db.listNews() });
+    return true;
+  }
+
+  if (req.method === "POST" && pathname === "/api/news") {
+    const user = await currentUser(req);
+    if (!requireRole(user, ["admin", "super_admin"])) {
+      sendJson(res, 403, { error: "Admin access required." });
+      return true;
+    }
+    const payload = await readJson(req);
+    if (!payload.title || !payload.body) {
+      sendJson(res, 400, { error: "Title and body are required." });
+      return true;
+    }
+    sendJson(res, 201, { post: await db.createNews(payload, user) });
     return true;
   }
 

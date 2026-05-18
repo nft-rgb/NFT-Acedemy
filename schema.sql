@@ -48,3 +48,15 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE INDEX idx_photos_status ON photos(status);
 CREATE INDEX idx_photos_category ON photos(category);
 CREATE INDEX idx_orders_status ON orders(payment_status);
+
+CREATE TABLE IF NOT EXISTS news_posts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  author_id INT NULL,
+  title VARCHAR(180) NOT NULL,
+  body TEXT NOT NULL,
+  status ENUM('published', 'draft') NOT NULL DEFAULT 'published',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_news_status ON news_posts(status);

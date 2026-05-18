@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=3.5.1" />
+    <link rel="stylesheet" href="styles.css?v=3.6.0" />
   </head>
   <body>
     <header class="topbar">
@@ -33,7 +33,7 @@
         <a class="active" href="#market" data-page="market"><span>Discover</span></a>
         <a href="#checkout" data-page="checkout"><span>Pay</span></a>
         <a href="#mint" data-page="mint"><span>Mint</span></a>
-        <a href="#cms" data-page="cms"><span>CMS</span></a>
+        <a href="#news" data-page="news"><span>News</span></a>
         <a href="#dashboard" data-page="dashboard"><span>Portal</span></a>
         <a class="secondary-nav" href="#protection" data-page="protection"><span>Protect</span></a>
         <a class="secondary-nav" href="#security" data-page="security"><span>Security</span></a>
@@ -414,7 +414,7 @@
               Partner dengan universiti, sekolah, event organizer dan studio supaya gambar rasmi
               konvokesyen, sukan, majlis, dan festival dijual sebagai koleksi verified.
             </p>
-            <a class="secondary-action" href="#cms" data-page="cms">Urus dari CMS</a>
+            <a class="secondary-action" href="#dashboard" data-page="dashboard">Urus dari Portal</a>
           </article>
           <div class="growth-grid">
             <article>
@@ -479,6 +479,32 @@
             <strong id="platformProfitMetric">0.00 ETH</strong>
             <p>Jumlah simulasi hasil owner berdasarkan setting semasa.</p>
           </article>
+        </div>
+      </section>
+
+      <section class="section news-section page-section" id="news" data-page="news">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Platform updates</p>
+            <h2>Photora News</h2>
+          </div>
+        </div>
+        <div class="news-layout">
+          <div class="news-feed" id="newsFeed" aria-live="polite"></div>
+          <form class="news-composer" id="newsForm">
+            <p class="eyebrow">Admin post</p>
+            <h3>Post news</h3>
+            <label>
+              Tajuk
+              <input name="title" type="text" placeholder="Contoh: Verified campus drop dibuka" required />
+            </label>
+            <label>
+              Kandungan
+              <textarea name="body" rows="5" placeholder="Tulis pengumuman platform..." required></textarea>
+            </label>
+            <button class="primary-action full" type="submit">Publish news</button>
+            <p class="form-note" id="newsNote" role="status"></p>
+          </form>
         </div>
       </section>
 
@@ -787,7 +813,7 @@
       <div class="footer-links">
         <span>Platform</span>
         <a href="#market" data-page="market">Discover</a>
-        <a href="#cms" data-page="cms">CMS</a>
+        <a href="#news" data-page="news">News</a>
         <a href="#dashboard" data-page="dashboard">Dashboard</a>
       </div>
       <div class="footer-contact">
@@ -843,6 +869,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=3.5.1"></script>
+    <script src="app.js?v=3.6.0"></script>
   </body>
 </html>
