@@ -1823,7 +1823,9 @@ async function handleCreateBill(req, res) {
     billExpiryDays: "3",
   });
 
-  const billCode = Array.isArray(result) && result[0] && result[0].BillCode;
+  const billCode =
+    (Array.isArray(result) && result[0] && result[0].BillCode) ||
+    (result && typeof result === "object" && result.BillCode);
   if (!billCode) {
     sendJson(res, 502, { error: "ToyyibPay did not return a BillCode.", raw: result });
     return;

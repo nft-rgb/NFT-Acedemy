@@ -253,17 +253,24 @@ function escapeHtml(value) {
 
 function setCheckoutReceiptLinks(receipts) {
   if (!checkoutReceiptLinks) return;
-  if (!receipts?.buyerReceiptUrl && !receipts?.sellerReceiptUrl) {
+  if (!receipts?.buyerReceiptUrl && !receipts?.sellerReceiptUrl && !receipts?.checkoutUrl) {
     checkoutReceiptLinks.hidden = true;
     checkoutReceiptLinks.innerHTML = "";
     return;
   }
   checkoutReceiptLinks.hidden = false;
   checkoutReceiptLinks.innerHTML = `
-    <strong>Resit PDF auto</strong>
+    <strong>Checkout dan resit</strong>
+    ${receipts.checkoutUrl ? `<a href="${escapeHtml(receipts.checkoutUrl)}" target="_blank" rel="noopener">Buka halaman bayaran ToyyibPay</a>` : ""}
     ${receipts.buyerReceiptUrl ? `<a href="${escapeHtml(receipts.buyerReceiptUrl)}" target="_blank" rel="noopener">Resit pembelian</a>` : ""}
     ${receipts.sellerReceiptUrl ? `<a href="${escapeHtml(receipts.sellerReceiptUrl)}" target="_blank" rel="noopener">Resit jualan creator</a>` : ""}
   `;
+}
+
+function makeSummary(text, length = 145) {
+  const value = String(text || "").replace(/\s+/g, " ").trim();
+  if (value.length <= length) return value;
+  return `${value.slice(0, length).trim()}...`;
 }
 
 function readFileAsDataUrl(file) {
@@ -444,6 +451,9 @@ async function loadNews() {
             (post) => {
               const shareUrl = encodeURIComponent(`${location.origin}${location.pathname}#news-${post.slug || post.id}`);
               const shareText = encodeURIComponent(post.title);
+              const fullBody = post.body || post.excerpt || "";
+              const summary = post.excerpt || makeSummary(fullBody);
+              const canReadMore = fullBody && fullBody.length > summary.length;
               return `<article class="news-card" id="news-${escapeHtml(post.slug || post.id)}">
                 <img src="${escapeHtml(post.image_url || "assets/photoralogo.png")}" alt="" />
                 <div class="news-card-body">
@@ -452,7 +462,13 @@ async function loadNews() {
                     <span>${new Date(post.created_at).toLocaleDateString("ms-MY")}</span>
                   </div>
                   <h3>${escapeHtml(post.title)}</h3>
-                  <p>${escapeHtml(post.excerpt || post.body)}</p>
+                  <p data-news-summary>${escapeHtml(summary)}</p>
+                  <p class="news-full-body" hidden>${escapeHtml(fullBody)}</p>
+                  ${
+                    canReadMore
+                      ? `<button class="read-more-button" type="button" data-news-read-more>Read more</button>`
+                      : ""
+                  }
                   <div class="news-share" aria-label="Share news">
                     <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noreferrer">Facebook</a>
                     <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}" target="_blank" rel="noreferrer">X</a>
@@ -469,6 +485,19 @@ async function loadNews() {
     newsFeed.innerHTML = '<p class="empty-state">News belum tersedia.</p>';
   }
 }
+
+newsFeed?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-news-read-more]");
+  if (!button) return;
+  const card = button.closest(".news-card");
+  const fullBody = card?.querySelector(".news-full-body");
+  const summary = card?.querySelector("[data-news-summary]");
+  if (!fullBody || !summary) return;
+  const isOpen = !fullBody.hidden;
+  fullBody.hidden = isOpen;
+  summary.hidden = !isOpen;
+  button.textContent = isOpen ? "Read more" : "Ringkaskan";
+});
 
 function applyHeroSlide(index) {
   if (!heroSlides.length || !heroSection) return;
@@ -1489,10 +1518,10 @@ payFiatButton.addEventListener("click", async () => {
     });
     updateMetrics();
     setCheckoutReceiptLinks(result);
-    checkoutNote.textContent = "Bill ToyyibPay berjaya. Redirect ke halaman pembayaran...";
+    checkoutNote.textContent = "Bill ToyyibPay berjaya. Jika halaman bayaran tidak terbuka, tekan pautan ToyyibPay di bawah.";
     window.setTimeout(() => {
-      window.location.href = result.checkoutUrl;
-    }, 900);
+      window.location.assign(result.checkoutUrl);
+    }, 1200);
   } catch (error) {
     checkoutNote.textContent = error.message;
     showToast("ToyyibPay checkout gagal.");

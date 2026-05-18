@@ -1182,8 +1182,8 @@ h2 {
 .settings-form,
 .table-wrap,
 .creator-tools {
-  padding: 18px;
-  border-radius: 18px;
+  padding: 14px;
+  border-radius: 14px;
   background: var(--surface);
 }
 
@@ -1221,16 +1221,16 @@ h2 {
 .role-dashboard-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
   align-items: start;
 }
 
 .crypto-panel {
   display: grid;
-  gap: 14px;
+  gap: 10px;
   min-height: 100%;
-  padding: 18px;
-  border-radius: 18px;
+  padding: 14px;
+  border-radius: 14px;
   background: #f8fafc;
   border: 1px solid var(--line);
 }
@@ -1277,16 +1277,16 @@ h2 {
 .portal-workspace {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 .portal-card,
 .scan-panel {
   display: grid;
-  gap: 12px;
-  padding: 18px;
+  gap: 10px;
+  padding: 14px;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 14px;
   background: #f8fafc;
 }
 
@@ -1654,6 +1654,23 @@ th {
 .news-card p {
   color: var(--muted);
   line-height: 1.6;
+}
+
+.news-full-body {
+  white-space: pre-line;
+}
+
+.read-more-button {
+  justify-self: start;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: #010066;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 900;
 }
 
 .news-meta {
@@ -2550,6 +2567,11 @@ th {
 
 .dashboard-module {
   scroll-margin-top: 96px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.045);
 }
 
 .dashboard-module-nav {
@@ -2588,7 +2610,7 @@ th {
   justify-content: space-between;
   align-items: center;
   gap: 14px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .module-title h3 {
@@ -2599,14 +2621,14 @@ th {
 .finance-module-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
 .finance-card {
   display: grid;
-  gap: 10px;
-  min-height: 150px;
-  padding: 18px;
+  gap: 8px;
+  min-height: 118px;
+  padding: 14px;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
   background: white;
@@ -2622,7 +2644,7 @@ th {
 
 .finance-card strong {
   color: #010066;
-  font-size: 1.5rem;
+  font-size: 1.28rem;
 }
 
 .finance-card p {
@@ -2909,9 +2931,9 @@ th {
 
 .management-card {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
-  padding: 18px;
+  padding: 14px;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
   background: #fff;
@@ -2919,8 +2941,8 @@ th {
 
 .management-list {
   display: grid;
-  gap: 10px;
-  max-height: 420px;
+  gap: 8px;
+  max-height: 360px;
   overflow: auto;
 }
 
