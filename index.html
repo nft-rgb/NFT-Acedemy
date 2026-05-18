@@ -41,7 +41,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=4.18.0" />
+    <link rel="stylesheet" href="styles.css?v=4.19.0" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -759,7 +759,7 @@
               <a class="active dashboard-jump" href="#dashboard-overview">Overview</a>
               <a class="dashboard-jump" href="#dashboard-profile">Profile</a>
               <a class="dashboard-jump" href="#dashboard-finance">Finance</a>
-              <a class="dashboard-jump admin-only" href="#dashboard-news">News</a>
+              <a class="dashboard-jump admin-only" href="#dashboard-news" hidden>News</a>
               <a class="dashboard-jump" href="#dashboard-assets">Assets</a>
               <a class="dashboard-jump" href="#dashboard-system">System</a>
             </nav>
@@ -793,14 +793,14 @@
                 <h2 id="roleDashboardTitle">Dashboard pengguna</h2>
                 <p>Urus content, asset photo, user, wallet, news dan semakan keaslian dalam satu panel.</p>
               </div>
-              <a class="primary-action dashboard-jump admin-only" href="#dashboard-news">Urus News</a>
+              <a class="primary-action dashboard-jump admin-only" href="#dashboard-news" hidden>Urus News</a>
             </div>
 
             <div class="dashboard-module-nav" aria-label="Dashboard modules">
               <a href="#dashboard-overview" class="dashboard-jump">Overview</a>
               <a href="#dashboard-profile" class="dashboard-jump">Profile</a>
               <a href="#dashboard-finance" class="dashboard-jump">Finance</a>
-              <a href="#dashboard-news" class="dashboard-jump admin-only">News</a>
+              <a href="#dashboard-news" class="dashboard-jump admin-only" hidden>News</a>
               <a href="#dashboard-assets" class="dashboard-jump">Photo</a>
               <a href="#dashboard-system" class="dashboard-jump">System</a>
             </div>
@@ -959,7 +959,7 @@
           <div class="role-tools">
             <button type="button" data-page="mint">Asset photo</button>
             <button type="button" data-page="checkout">Wallet cash</button>
-            <button class="admin-only" type="button" data-page="news">Post news</button>
+            <button class="admin-only" type="button" data-page="news" hidden>Post news</button>
             <button type="button" data-page="security">Security</button>
           </div>
           <div class="portal-workspace">
@@ -996,13 +996,17 @@
           </div>
           <form class="scan-panel dashboard-module" id="scanForm">
             <div>
-              <p class="eyebrow">Photo authenticity</p>
-              <h3>Scan kod keaslian foto</h3>
-              <p>Setiap foto yang didaftarkan akan mempunyai kod khas Photora untuk semakan keaslian asset.</p>
+              <p class="eyebrow">AI-assisted photo authenticity</p>
+              <h3>Camera scanner ketulenan foto</h3>
+              <p>Scan kod, URL atau upload/capture gambar. Jika asset berdaftar ditemui, sistem jana link sijil pemilikan Photora.</p>
             </div>
             <label>
               Kod / image URL
-              <input name="query" type="text" placeholder="PHOTORA-... atau URL gambar" required />
+              <input name="query" type="text" placeholder="PHOTORA-... atau URL gambar" />
+            </label>
+            <label>
+              Camera / upload image
+              <input name="scan_image" type="file" accept="image/*" capture="environment" />
             </label>
             <button class="primary-action" type="submit">Scan photo</button>
             <p class="form-note" id="scanNote" role="status"></p>
@@ -1016,7 +1020,7 @@
               <div class="management-list" id="myListingList"></div>
             </section>
 
-            <section class="management-card dashboard-module" data-role-card="admin">
+            <section class="management-card dashboard-module" data-role-card="admin" hidden>
               <div class="table-heading">
                 <h3>Photo approval</h3>
                 <button class="secondary-action" id="refreshCmsButton" type="button">Refresh data</button>
@@ -1024,10 +1028,10 @@
               <div class="management-list" id="portalPhotoList"></div>
             </section>
 
-            <section class="management-card dashboard-module" id="dashboard-system" data-role-card="super_admin">
+            <section class="management-card dashboard-module" id="dashboard-system" data-role-card="super_admin" hidden>
               <div class="table-heading">
                 <h3>User, admin & super admin</h3>
-                <span>Super admin only</span>
+                <span>Super admin boleh lantik admin, turun role dan suspend/aktif akaun</span>
               </div>
               <form class="inline-admin-form" id="createUserForm">
                 <input name="name" type="text" placeholder="Nama" required />
@@ -1044,7 +1048,7 @@
               <div class="management-list" id="portalUserList"></div>
             </section>
 
-            <section class="management-card dashboard-module" data-role-card="admin">
+            <section class="management-card dashboard-module" data-role-card="admin" hidden>
               <div class="table-heading">
                 <h3>Orders & payment</h3>
                 <span>ToyyibPay / wallet</span>
@@ -1052,7 +1056,7 @@
               <div class="management-list" id="portalOrderList"></div>
             </section>
 
-            <section class="management-card news-manager-card dashboard-module" id="dashboard-news" data-role-card="admin">
+            <section class="management-card news-manager-card dashboard-module" id="dashboard-news" data-role-card="admin" hidden>
               <div class="table-heading">
                 <div>
                   <h3>News management</h3>
@@ -1111,7 +1115,7 @@
               <div class="management-list news-admin-list" id="portalNewsList"></div>
             </section>
 
-            <section class="management-card" data-role-card="admin">
+            <section class="management-card" data-role-card="admin" hidden>
               <div class="table-heading">
                 <h3>Hero slider</h3>
                 <span>Front page content</span>
@@ -1279,6 +1283,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=4.18.0"></script>
+    <script src="app.js?v=4.19.0"></script>
   </body>
 </html>

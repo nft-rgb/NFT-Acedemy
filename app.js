@@ -679,9 +679,9 @@ function renderUserManager(users = []) {
           (user) => `<article class="manager-row compact">
             <div><strong>${escapeHtml(user.name)}</strong><span>${escapeHtml(user.email)} · ${escapeHtml(user.role)} · ${escapeHtml(user.status)}</span></div>
             <div class="manager-actions">
-              <button type="button" data-user-role="user" data-user-id="${user.id}">User</button>
-              <button type="button" data-user-role="admin" data-user-id="${user.id}">Admin</button>
-              <button type="button" data-user-status="${user.status === "active" ? "suspended" : "active"}" data-user-id="${user.id}">${user.status === "active" ? "Suspend" : "Activate"}</button>
+              <button type="button" data-user-role="user" data-user-id="${user.id}">Turun ke user</button>
+              <button type="button" data-user-role="admin" data-user-id="${user.id}">Lantik admin</button>
+              <button type="button" data-user-status="${user.status === "active" ? "suspended" : "active"}" data-user-id="${user.id}">${user.status === "active" ? "Tutup akses" : "Buka akses"}</button>
             </div>
           </article>`,
         )
@@ -1365,16 +1365,23 @@ portalNewsList.addEventListener("click", async (event) => {
 
 scanForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const query = new FormData(scanForm).get("query");
-  scanNote.textContent = "Scanning authenticity code...";
+  const data = new FormData(scanForm);
+  const imageFile = data.get("scan_image");
+  const uploadedImage = imageFile && imageFile.size ? await readFileAsDataUrl(imageFile) : "";
+  const query = data.get("query") || uploadedImage;
+  if (!query) {
+    scanNote.textContent = "Masukkan kod/URL atau upload gambar untuk scan.";
+    return;
+  }
+  scanNote.textContent = uploadedImage ? "AI-assisted scanner sedang analisis gambar..." : "Scanning authenticity code...";
   try {
     const result = await apiRequest("/api/photos/verify", {
       method: "POST",
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, mode: uploadedImage ? "camera_image" : "code_or_url" }),
     });
-    scanNote.textContent = result.valid
-      ? `Sah: ${result.photo.title} (${result.photo.authenticity_code || "registered asset"})`
-      : "Tidak ditemui dalam rekod Photora. Semak semula kod atau URL gambar.";
+    scanNote.innerHTML = result.valid
+      ? `Sah: ${escapeHtml(result.photo.title)} (${escapeHtml(result.photo.authenticity_code || "registered asset")}). <a href="${escapeHtml(result.certificateUrl)}" target="_blank" rel="noopener">Buka sijil pemilikan</a><br><small>${escapeHtml(result.aiAnalysis || "")}</small>`
+      : `Tidak ditemui dalam rekod Photora. ${escapeHtml(result.aiAnalysis || "Semak semula kod, URL atau gambar.")}`;
   } catch (error) {
     scanNote.textContent = error.message;
   }

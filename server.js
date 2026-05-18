@@ -163,6 +163,51 @@ function escapePdfText(value) {
     .replace(/\)/g, "\\)");
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function buildOwnershipCertificate(photo) {
+  return `<!doctype html>
+<html lang="ms">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sijil Pemilikan Photora - ${escapeHtml(photo.title)}</title>
+    <style>
+      body{margin:0;font-family:Inter,Arial,sans-serif;background:#f4f6fa;color:#111827}
+      main{max-width:860px;margin:40px auto;padding:28px;background:white;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 18px 50px rgba(15,23,42,.08)}
+      img{width:100%;max-height:420px;object-fit:cover;border-radius:14px}
+      .seal{display:inline-flex;margin:0 0 18px;padding:8px 14px;border-radius:999px;background:#eef2ff;color:#5548ea;font-weight:900}
+      h1{font-size:clamp(2rem,5vw,3.2rem);margin:0 0 12px}
+      dl{display:grid;grid-template-columns:180px 1fr;gap:12px;margin-top:22px}
+      dt{color:#64748b;font-weight:800}dd{margin:0;font-weight:800}
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="seal">PHOTORA VERIFIED CERTIFICATE</span>
+      <h1>Sijil Ketulenan & Pemilikan Foto</h1>
+      <p>Asset ini ditemui dalam rekod Photora dan mempunyai kod pengesahan berdaftar.</p>
+      <img src="${escapeHtml(photo.image_url || "assets/photoralogo.png")}" alt="" />
+      <dl>
+        <dt>Title</dt><dd>${escapeHtml(photo.title)}</dd>
+        <dt>Creator</dt><dd>${escapeHtml(photo.creator_name || "Photora Creator")}</dd>
+        <dt>Category</dt><dd>${escapeHtml(photo.category || "-")}</dd>
+        <dt>Authenticity Code</dt><dd>${escapeHtml(photo.authenticity_code || "-")}</dd>
+        <dt>Status</dt><dd>${escapeHtml(photo.status || "registered")}</dd>
+        <dt>Verified At</dt><dd>${new Date().toLocaleString("en-MY", { timeZone: "Asia/Kuala_Lumpur" })}</dd>
+      </dl>
+    </main>
+  </body>
+</html>`;
+}
+
 function buildReceiptPdf(order, type = "buyer") {
   const receiptType = type === "seller" ? "Resit Jualan Creator" : "Resit Pembelian";
   const receiptNo = `${type === "seller" ? "SALE" : "BUY"}-${order.order_ref}`;
@@ -1615,8 +1660,13 @@ async function handleApi(req, res, pathname) {
   if (req.method === "POST" && pathname === "/api/photos/verify") {
     const payload = await readJson(req);
     const photo = await db.verifyPhoto(payload.query || "");
+    const aiAnalysis = photo
+      ? `AI-assisted analysis: asset matched Photora registry via ${payload.mode === "camera_image" ? "camera/image upload" : "code or URL"} and ownership certificate is available.`
+      : `AI-assisted analysis: no matching ownership record was found in Photora registry. This does not prove the image is fake, but it is not registered here.`;
     sendJson(res, 200, {
       valid: Boolean(photo),
+      aiAnalysis,
+      certificateUrl: photo ? `/api/certificate/${encodeURIComponent(photo.authenticity_code || photo.id)}` : "",
       photo: photo
         ? {
             id: photo.id,
@@ -1628,6 +1678,19 @@ async function handleApi(req, res, pathname) {
           }
         : null,
     });
+    return true;
+  }
+
+  const certificateMatch = pathname.match(/^\/api\/certificate\/([^/]+)$/);
+  if (req.method === "GET" && certificateMatch) {
+    const photo = await db.verifyPhoto(decodeURIComponent(certificateMatch[1]));
+    if (!photo) {
+      res.writeHead(404, { "Content-Type": "text/html; charset=utf-8" });
+      res.end("<h1>Sijil tidak ditemui</h1><p>Asset ini tidak dijumpai dalam rekod Photora.</p>");
+      return true;
+    }
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+    res.end(buildOwnershipCertificate(photo));
     return true;
   }
 
