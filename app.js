@@ -248,6 +248,7 @@ function showToast(message) {
 async function apiRequest(path, options = {}) {
   const response = await fetch(path, {
     credentials: "same-origin",
+    cache: options.cache || "no-store",
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     ...options,
   });
@@ -288,7 +289,7 @@ async function loadSettings() {
 }
 
 function updateAccountUi() {
-  accountButton.textContent = currentUser ? "Portal" : "Login";
+  accountButton.textContent = "Login";
   roleBadge.textContent = currentUser?.role || "Guest";
   roleDashboardTitle.textContent = currentUser
     ? `Dashboard ${currentUser.role.replace("_", " ")}`
@@ -805,7 +806,8 @@ walletButton.addEventListener("click", () => {
   showToast(walletConnected ? "Wallet disambungkan." : "Wallet diputuskan.");
 });
 
-accountButton.addEventListener("click", async () => {
+accountButton.addEventListener("click", async (event) => {
+  event.preventDefault();
   if (currentUser) {
     showPage("dashboard");
     return;
