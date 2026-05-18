@@ -22,7 +22,7 @@ let nftItems = [
   },
   {
     title: "Portrait Heritage #103",
-    creator: "Ruang Potret",
+    creator: "Portrait Space",
     category: "Potret",
     price: 0.18,
     image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80",
@@ -173,8 +173,6 @@ const profileAvatarPreview = document.querySelector("#profileAvatarPreview");
 const walletNote = document.querySelector("#walletNote");
 const roleDashboardTitle = document.querySelector("#roleDashboardTitle");
 const roleBadge = document.querySelector("#roleBadge");
-const cryptoPriceList = document.querySelector("#cryptoPriceList");
-const refreshCryptoButton = document.querySelector("#refreshCryptoButton");
 const roleTools = document.querySelectorAll(".role-tools [data-page]");
 const roleCards = document.querySelectorAll("[data-role-card]");
 const scanForm = document.querySelector("#scanForm");
@@ -211,6 +209,7 @@ const cartServiceFee = document.querySelector("#cartServiceFee");
 const cartTotal = document.querySelector("#cartTotal");
 const cartCheckoutButton = document.querySelector("#cartCheckoutButton");
 const cartNote = document.querySelector("#cartNote");
+const cartBadge = document.querySelector("#cartBadge");
 const serviceFeeMetric = document.querySelector("#serviceFeeMetric");
 const salesGrossMetric = document.querySelector("#salesGrossMetric");
 const salesFeeMetric = document.querySelector("#salesFeeMetric");
@@ -249,6 +248,15 @@ function formatMyr(price) {
     style: "currency",
     currency: "MYR",
   }).format(price);
+}
+
+function displayCategory(category) {
+  const labels = {
+    Konvokesyen: "Convocation",
+    Majlis: "Ceremony",
+    Potret: "Portrait",
+  };
+  return labels[category] || category;
 }
 
 function escapeHtml(value) {
@@ -522,32 +530,6 @@ async function loadPhotos() {
     }
   } catch {
     showToast("Using demo data because the database is not available yet.");
-  }
-}
-
-function formatPriceValue(value, currency) {
-  if (!value) return "Unavailable";
-  return new Intl.NumberFormat(currency === "USD" ? "en-US" : "ms-MY", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: currency === "MYR" ? 0 : 2,
-  }).format(value);
-}
-
-async function loadCryptoPrices() {
-  if (!cryptoPriceList) return;
-  cryptoPriceList.innerHTML = "<span>Loading crypto prices...</span>";
-  try {
-    const result = await apiRequest("/api/market/crypto-prices");
-    const prices = result.prices || {};
-    cryptoPriceList.innerHTML = ["BTC", "ETH", "USDT"]
-      .map((symbol) => {
-        const item = prices[symbol] || {};
-        return `<span><b>${symbol}</b><em>${formatPriceValue(item.myr, "MYR")} / ${formatPriceValue(item.usd, "USD")}</em></span>`;
-      })
-      .join("");
-  } catch {
-    cryptoPriceList.innerHTML = "<span>Crypto prices are not available yet.</span>";
   }
 }
 
@@ -1012,6 +994,14 @@ function saveCart() {
   localStorage.setItem("photoraCart", JSON.stringify(cartItems));
 }
 
+function certificateUrlForItem(item) {
+  return item?.authenticityCode ? `/api/certificate/${encodeURIComponent(item.authenticityCode)}` : "";
+}
+
+function absoluteUrl(path) {
+  return path ? `${location.origin}${path}` : "";
+}
+
 function addToCart(item) {
   if (!cartItems.some((cartItem) => Number(cartItem.id) === Number(item.id))) {
     cartItems.push(item);
@@ -1025,17 +1015,27 @@ function renderCart() {
   if (!cartList) return;
   const subtotal = cartItems.reduce((total, item) => total + Number(item.priceMyr || item.price * ethToMyr || 0), 0);
   const fee = subtotal * (feeSettings.platformFee / 100);
+  if (cartBadge) {
+    cartBadge.textContent = cartItems.length;
+    cartBadge.hidden = cartItems.length === 0;
+  }
   cartSubtotal.textContent = formatMyr(subtotal);
   cartServiceFee.textContent = formatMyr(fee);
   cartTotal.textContent = formatMyr(subtotal);
   cartList.innerHTML = cartItems.length
     ? cartItems
         .map(
-          (item) => `<article class="cart-row">
+          (item) => {
+            const certificateUrl = certificateUrlForItem(item);
+            return `<article class="cart-row">
             <img src="${escapeHtml(item.image)}" alt="" />
             <div><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.creator)} · ${formatMyr(item.priceMyr || item.price * ethToMyr)}</span><small>Platform split: ${formatMyr((item.priceMyr || item.price * ethToMyr) * (feeSettings.platformFee / 100))} / Creator: ${formatMyr((item.priceMyr || item.price * ethToMyr) * (1 - feeSettings.platformFee / 100))}</small></div>
-            <button type="button" data-remove-cart="${item.id}">Remove</button>
-          </article>`,
+            <div class="cart-row-actions">
+              ${certificateUrl ? `<a href="${escapeHtml(certificateUrl)}" target="_blank" rel="noopener">Certificate</a>` : ""}
+              <button type="button" data-remove-cart="${item.id}">Remove</button>
+            </div>
+          </article>`;
+          },
         )
         .join("")
     : '<p class="empty-state">Your cart is empty. Add photos from the marketplace.</p>';
@@ -1046,7 +1046,7 @@ function renderCards() {
   const selectedCategory = categoryFilter.value;
   const filtered = nftItems.filter((item) => {
     const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
-    const searchable = `${item.title} ${item.creator} ${item.category}`.toLowerCase();
+    const searchable = `${item.title} ${item.creator} ${item.category} ${displayCategory(item.category)}`.toLowerCase();
     return matchesCategory && searchable.includes(query);
   });
 
@@ -1087,7 +1087,7 @@ function renderCards() {
 
     const tag = document.createElement("span");
     tag.className = "tag";
-    tag.textContent = item.category;
+    tag.textContent = displayCategory(item.category);
     cardTop.append(titleWrap, tag);
 
     if (item.authenticityCode) {
@@ -1095,6 +1095,26 @@ function renderCards() {
       code.className = "auth-code";
       code.textContent = item.authenticityCode;
       titleWrap.appendChild(code);
+    }
+
+    const qrTools = document.createElement("div");
+    qrTools.className = "asset-qr-tools";
+    const certificateUrl = certificateUrlForItem(item);
+    if (certificateUrl) {
+      const certificateLink = document.createElement("a");
+      certificateLink.href = certificateUrl;
+      certificateLink.target = "_blank";
+      certificateLink.rel = "noopener";
+      certificateLink.textContent = "Certificate";
+
+      const qrLink = document.createElement("a");
+      qrLink.href = qrImageUrlFor(absoluteUrl(certificateUrl));
+      qrLink.target = "_blank";
+      qrLink.rel = "noopener";
+      qrLink.textContent = "QR";
+
+      qrTools.append(certificateLink, qrLink);
+      titleWrap.appendChild(qrTools);
     }
 
     const cardBottom = document.createElement("div");
@@ -1125,7 +1145,7 @@ function renderCards() {
     const fiatButton = document.createElement("button");
     fiatButton.type = "button";
     fiatButton.className = "fiat-button";
-    fiatButton.textContent = "Add cart";
+    fiatButton.textContent = "Add to basket";
     fiatButton.addEventListener("click", () => {
       addToCart(item);
     });
@@ -1329,7 +1349,6 @@ walletForm.addEventListener("submit", async (event) => {
   }
 });
 
-refreshCryptoButton.addEventListener("click", loadCryptoPrices);
 refreshCmsButton.addEventListener("click", loadCmsData);
 
 heroDots.addEventListener("click", (event) => {
@@ -1586,7 +1605,7 @@ cartList.addEventListener("click", (event) => {
 
 cartCheckoutButton.addEventListener("click", () => {
   if (!cartItems.length) {
-    cartNote.textContent = "Cart masih kosong.";
+    cartNote.textContent = "Your basket is empty.";
     return;
   }
   const subtotal = cartItems.reduce((total, item) => total + Number(item.priceMyr || item.price * ethToMyr || 0), 0);
@@ -1882,5 +1901,4 @@ loadSession().then(async () => {
   await loadCmsData();
   showPage((window.location.hash || "#market").replace("#", ""), false);
 });
-loadCryptoPrices();
 loadNews();

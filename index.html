@@ -41,7 +41,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=4.23.0" />
+    <link rel="stylesheet" href="styles.css?v=4.24.0" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -79,10 +79,10 @@
       >
         Menu
       </button>
-      <nav class="nav-links" id="primaryNav" aria-label="Navigasi utama">
+      <nav class="nav-links" id="primaryNav" aria-label="Primary navigation">
         <a class="active" href="#market" data-page="market"><span>Marketplace</span></a>
         <a href="#mint" data-page="mint"><span>Mint Photo</span></a>
-        <a href="#cart" data-page="cart"><span>Cart</span></a>
+        <a class="basket-nav" href="#cart" data-page="cart"><span>Basket</span><b id="cartBadge" hidden>0</b></a>
         <a href="#news" data-page="news"><span>News</span></a>
         <a href="#about" data-page="about"><span>About</span></a>
         <a href="#contact" data-page="contact"><span>Contact</span></a>
@@ -138,9 +138,9 @@
             <span>Category</span>
             <select id="categoryFilter">
               <option value="all">All</option>
-              <option value="Konvokesyen">Konvokesyen</option>
-              <option value="Majlis">Majlis</option>
-              <option value="Potret">Potret</option>
+              <option value="Konvokesyen">Convocation</option>
+              <option value="Majlis">Ceremony</option>
+              <option value="Potret">Portrait</option>
               <option value="Travel">Travel</option>
               <option value="Landscape">Landscape</option>
               <option value="Street">Street</option>
@@ -157,7 +157,7 @@
 
         <div class="category-pills" aria-label="Quick categories">
           <button class="active" type="button" data-category="all">All</button>
-          <button type="button" data-category="Konvokesyen">Konvokesyen</button>
+          <button type="button" data-category="Konvokesyen">Convocation</button>
           <button type="button" data-category="Mobilegraphy">Mobilegraphy</button>
           <button type="button" data-category="Street">Street</button>
           <button type="button" data-category="Landscape">Landscape</button>
@@ -399,9 +399,9 @@
             <label>
               Category
               <select name="category" required>
-                <option value="Konvokesyen">Konvokesyen</option>
-                <option value="Majlis">Majlis</option>
-                <option value="Potret">Potret</option>
+                <option value="Konvokesyen">Convocation</option>
+                <option value="Majlis">Ceremony</option>
+                <option value="Potret">Portrait</option>
                 <option value="Travel">Travel</option>
                 <option value="Landscape">Landscape</option>
                 <option value="Street">Street</option>
@@ -873,7 +873,7 @@
                 <input name="email" type="email" placeholder="email@domain.com" />
               </label>
               <label>
-                Telefon
+                Phone
                 <input name="phone" type="tel" placeholder="0100000000" />
               </label>
               <label>
@@ -881,8 +881,8 @@
                 <input name="mobile_phone" type="tel" placeholder="60123456789" />
               </label>
               <label>
-                Alamat tempat tinggal
-                <textarea name="address" rows="3" placeholder="Alamat penuh"></textarea>
+                Residential address
+                <textarea name="address" rows="3" placeholder="Full address"></textarea>
               </label>
               <button class="primary-action" type="submit">Save profile</button>
               <p class="form-note" id="profileNote" role="status"></p>
@@ -916,18 +916,6 @@
               <button class="primary-action" type="submit">Save finance</button>
               <p class="form-note" id="walletNote" role="status"></p>
             </form>
-            <article class="crypto-panel">
-              <div class="table-heading">
-                <h3>Current crypto prices</h3>
-                <button class="secondary-action" id="refreshCryptoButton" type="button">Refresh</button>
-              </div>
-              <div class="crypto-price-list" id="cryptoPriceList">
-                <span>ETH: loading...</span>
-                <span>BTC: loading...</span>
-                <span>USDT: loading...</span>
-              </div>
-              <a class="luno-link" href="https://www.luno.com/en/my" target="_blank" rel="noreferrer">Open LUNO Malaysia</a>
-            </article>
           </div>
             </section>
 
@@ -1105,7 +1093,7 @@
                   <input name="excerpt" type="text" placeholder="Short intro for the news card" />
                 </label>
                 <label>
-                  Gambar news
+                  News image
                   <input name="image_url" type="url" placeholder="Image URL or upload an image below" />
                 </label>
                 <label>
@@ -1299,6 +1287,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=4.23.0"></script>
+    <script src="app.js?v=4.24.0"></script>
   </body>
 </html>

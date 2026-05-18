@@ -172,6 +172,14 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
+function displayCategory(category) {
+  return {
+    Konvokesyen: "Convocation",
+    Majlis: "Ceremony",
+    Potret: "Portrait",
+  }[category] || category;
+}
+
 function buildOwnershipCertificate(photo, ownership = null) {
   const certificateUrl = makeAppUrl(certificateUrlFor(photo));
   const qrUrl = qrImageUrlFor(certificateUrl);
@@ -212,7 +220,7 @@ function buildOwnershipCertificate(photo, ownership = null) {
         <dt>Title</dt><dd>${escapeHtml(photo.title)}</dd>
         <dt>Original Owner</dt><dd>${escapeHtml(originalOwner)}</dd>
         <dt>New Owner</dt><dd>${escapeHtml(currentOwner)}</dd>
-        <dt>Category</dt><dd>${escapeHtml(photo.category || "-")}</dd>
+        <dt>Category</dt><dd>${escapeHtml(displayCategory(photo.category || "-"))}</dd>
         <dt>Authenticity Code</dt><dd>${escapeHtml(photo.authenticity_code || "-")}</dd>
         <dt>Ledger Hash</dt><dd class="hash">${escapeHtml(ledgerHash)}</dd>
         <dt>Status</dt><dd>${escapeHtml(photo.status || "registered")}</dd>
@@ -1676,7 +1684,7 @@ async function handleAuth(req, res, pathname) {
                 body: JSON.stringify({ token: ${JSON.stringify(token)}, password: new FormData(event.currentTarget).get("password") })
               });
               const result = await response.json().catch(() => ({}));
-              note.innerHTML = response.ok ? 'Password sudah ditukar. <a href="/#login">Login sekarang</a>.' : (result.error || "Reset gagal.");
+              note.innerHTML = response.ok ? 'Password has been changed. <a href="/#login">Log in now</a>.' : (result.error || "Reset failed.");
             });
           </script>
         </body>

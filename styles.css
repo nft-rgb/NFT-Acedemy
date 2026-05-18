@@ -426,6 +426,27 @@ img {
   color: white;
 }
 
+.basket-nav {
+  position: relative;
+  gap: 7px;
+}
+
+.basket-nav b {
+  min-width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #c6281d;
+  color: #fff;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.basket-nav b[hidden] {
+  display: none;
+}
+
 .page-section {
   display: none !important;
 }
@@ -989,6 +1010,25 @@ h2 {
   gap: 8px;
   flex-wrap: wrap;
   justify-content: end;
+}
+
+.asset-qr-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.asset-qr-tools a {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid #dbe3ef;
+  border-radius: 999px;
+  color: var(--blue);
+  font-size: 0.72rem;
+  font-weight: 900;
 }
 
 .card-bottom button {
@@ -3429,8 +3469,11 @@ th {
 }
 
 .cart-row button,
+.cart-row a,
 .pricing-actions button {
   min-height: 36px;
+  display: inline-flex;
+  align-items: center;
   padding: 0 12px;
   border: 1px solid #dbe3ef;
   border-radius: 999px;
@@ -3438,6 +3481,13 @@ th {
   color: #010066;
   cursor: pointer;
   font-weight: 850;
+}
+
+.cart-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 8px;
 }
 
 .sales-strip {
