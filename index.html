@@ -41,7 +41,7 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=4.17.0" />
+    <link rel="stylesheet" href="styles.css?v=4.18.0" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -759,7 +759,7 @@
               <a class="active dashboard-jump" href="#dashboard-overview">Overview</a>
               <a class="dashboard-jump" href="#dashboard-profile">Profile</a>
               <a class="dashboard-jump" href="#dashboard-finance">Finance</a>
-              <a class="dashboard-jump" href="#dashboard-news">News</a>
+              <a class="dashboard-jump admin-only" href="#dashboard-news">News</a>
               <a class="dashboard-jump" href="#dashboard-assets">Assets</a>
               <a class="dashboard-jump" href="#dashboard-system">System</a>
             </nav>
@@ -793,14 +793,14 @@
                 <h2 id="roleDashboardTitle">Dashboard pengguna</h2>
                 <p>Urus content, asset photo, user, wallet, news dan semakan keaslian dalam satu panel.</p>
               </div>
-              <a class="primary-action dashboard-jump" href="#dashboard-news">Urus News</a>
+              <a class="primary-action dashboard-jump admin-only" href="#dashboard-news">Urus News</a>
             </div>
 
             <div class="dashboard-module-nav" aria-label="Dashboard modules">
               <a href="#dashboard-overview" class="dashboard-jump">Overview</a>
               <a href="#dashboard-profile" class="dashboard-jump">Profile</a>
               <a href="#dashboard-finance" class="dashboard-jump">Finance</a>
-              <a href="#dashboard-news" class="dashboard-jump">News</a>
+              <a href="#dashboard-news" class="dashboard-jump admin-only">News</a>
               <a href="#dashboard-assets" class="dashboard-jump">Photo</a>
               <a href="#dashboard-system" class="dashboard-jump">System</a>
             </div>
@@ -856,7 +856,7 @@
                 <img id="profileAvatarPreview" src="assets/photoralogo.png" alt="" />
                 <div>
                   <strong>Gambar profile passport</strong>
-                  <span>Upload foto muka format passport. Sistem akan crop kepada nisbah 7:9.</span>
+                  <span>Upload JPG, PNG atau WebP. Sistem akan crop kepada nisbah 7:9 dan simpan dalam database profile.</span>
                   <label class="file-pill">
                     Pilih gambar
                     <input name="avatar_file" type="file" accept="image/*" />
@@ -959,7 +959,7 @@
           <div class="role-tools">
             <button type="button" data-page="mint">Asset photo</button>
             <button type="button" data-page="checkout">Wallet cash</button>
-            <button type="button" data-page="news">Post news</button>
+            <button class="admin-only" type="button" data-page="news">Post news</button>
             <button type="button" data-page="security">Security</button>
           </div>
           <div class="portal-workspace">
@@ -1279,6 +1279,6 @@
       </div>
     </aside>
 
-    <script src="app.js?v=4.16.0"></script>
+    <script src="app.js?v=4.18.0"></script>
   </body>
 </html>

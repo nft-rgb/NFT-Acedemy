@@ -325,16 +325,20 @@ function readPassportImageAsDataUrl(file) {
       resolve("");
       return;
     }
+    if (file.size > 8 * 1024 * 1024) {
+      reject(new Error("Saiz gambar terlalu besar. Sila pilih gambar bawah 8MB."));
+      return;
+    }
     if (!file.type.startsWith("image/")) {
       reject(new Error("Sila pilih fail gambar sahaja."));
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const image = new Image();
-      image.onload = () => {
-        const targetWidth = 280;
-        const targetHeight = 360;
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    image.onload = () => {
+      try {
+        const targetWidth = 210;
+        const targetHeight = 270;
         const sourceRatio = image.width / image.height;
         const targetRatio = targetWidth / targetHeight;
         let sourceWidth = image.width;
@@ -355,13 +359,18 @@ function readPassportImageAsDataUrl(file) {
         context.fillStyle = "#ffffff";
         context.fillRect(0, 0, targetWidth, targetHeight);
         context.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, targetWidth, targetHeight);
-        resolve(canvas.toDataURL("image/jpeg", 0.84));
-      };
-      image.onerror = () => reject(new Error("Gambar profile tidak dapat dibaca."));
-      image.src = reader.result;
+        URL.revokeObjectURL(objectUrl);
+        resolve(canvas.toDataURL("image/jpeg", 0.78));
+      } catch (error) {
+        URL.revokeObjectURL(objectUrl);
+        reject(error);
+      }
     };
-    reader.onerror = () => reject(new Error("Gambar profile tidak dapat dibaca."));
-    reader.readAsDataURL(file);
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Gambar profile tidak dapat dibaca. Sila guna JPG, PNG atau WebP."));
+    };
+    image.src = objectUrl;
   });
 }
 
@@ -1184,7 +1193,7 @@ profileForm.elements.avatar_file?.addEventListener("change", async (event) => {
     const imageData = await readPassportImageAsDataUrl(file);
     profileForm.elements.avatar_url.value = imageData;
     if (profileAvatarPreview) profileAvatarPreview.src = imageData;
-    profileNote.textContent = "Gambar passport sedia untuk disimpan.";
+    profileNote.textContent = "Gambar passport sedia untuk disimpan. Tekan Save profile.";
   } catch (error) {
     profileNote.textContent = error.message;
   }
